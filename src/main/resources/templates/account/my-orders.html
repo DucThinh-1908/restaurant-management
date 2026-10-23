@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head('Lịch sử đơn đặt món | GoD Fine Dining')}">
+  <meta charset="utf-8">
+  <title>Lịch sử đơn đặt món | GoD Fine Dining</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<header th:replace="~{fragments/header :: header('account')}"></header>
+
+<main>
+  <section class="page-hero" style="min-height: 220px; padding: 40px 24px;">
+    <div>
+      <span class="eyebrow">Customer Portal</span>
+      <h1 style="font-size: clamp(28px, 4vw, 44px);">Lịch Sử Đặt Món</h1>
+      <p>Theo dõi trạng thái chế biến và giao món của tất cả các đơn hàng trực tuyến.</p>
+    </div>
+  </section>
+
+  <section class="section" style="padding-top: 45px;">
+    <div class="container" style="max-width: 900px;">
+
+      <div style="margin-bottom: 25px;">
+        <a th:href="@{/my-account}" style="font-size: 13px; color: var(--gold-dark); text-decoration: underline;">← Quay lại trang tài khoản</a>
+      </div>
+
+      <div th:if="${orders != null and not #lists.isEmpty(orders)}">
+        <div th:each="order : ${orders}" class="order-detail-card" style="background: white; border: 1px solid var(--line); border-radius: 4px; padding: 22px; margin-bottom: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.03);">
+          
+          <!-- Tiêu đề thẻ đơn hàng -->
+          <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--line); padding-bottom: 14px; margin-bottom: 15px;">
+            <div>
+              <strong style="color: var(--gold-dark); font-family: monospace; font-size: 17px;" th:text="${order.orderCode}">ORD-001</strong>
+              <div style="font-size: 12px; color: var(--muted); margin-top: 2px;" th:text="${order.formattedCreatedAt} + ' • ' + ${order.orderTypeDisplayName}"></div>
+            </div>
+            <div>
+              <span class="badge" th:classappend="${order.statusBadgeClass}" th:text="${order.statusDisplayName}">Chờ xác nhận</span>
+            </div>
+          </div>
+
+          <!-- Chi tiết các món trong đơn -->
+          <table style="width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 15px;">
+            <tbody>
+              <tr th:each="item : ${order.items}" style="border-bottom: 1px dashed #f0ece3;">
+                <td style="padding: 8px 0;">
+                  <strong th:text="${item.itemName}">Tên món</strong>
+                  <span th:if="${item.note != null and not #strings.isEmpty(item.note)}" 
+                        th:text="' (' + ${item.note} + ')'" 
+                        style="color: var(--muted); font-style: italic;"></span>
+                </td>
+                <td style="padding: 8px 0; text-align: center; color: var(--muted);" th:text="'x ' + ${item.quantity}">x 1</td>
+                <td style="padding: 8px 0; text-align: right; font-family: var(--serif);" 
+                    th:text="${#numbers.formatDecimal(item.totalPrice, 0, 'COMMA', 0, 'POINT')} + ' đ'">
+                  95,000 đ
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+          <!-- Thông tin giao hàng & Tổng tiền -->
+          <div style="display: flex; justify-content: space-between; align-items: flex-end; background: #faf7f2; padding: 12px 16px; border-radius: 4px; font-size: 13px;">
+            <div>
+              <div th:if="${order.deliveryAddress != null and not #strings.isEmpty(order.deliveryAddress)}">
+                <span style="color: var(--muted);">Địa chỉ giao: </span>
+                <span th:text="${order.deliveryAddress}"></span>
+              </div>
+              <div>
+                <span style="color: var(--muted);">Thanh toán: </span>
+                <span th:text="${order.paymentMethod == 'BANK_TRANSFER' ? 'Chuyển khoản QR' : 'Tiền mặt khi nhận (COD)'}"></span>
+              </div>
+            </div>
+
+            <div style="text-align: right;">
+              <span style="font-size: 12px; color: var(--muted);">Tổng thanh toán: </span>
+              <span style="font-family: var(--serif); font-size: 18px; font-weight: bold; color: var(--gold-dark);" 
+                    th:text="${#numbers.formatDecimal(order.totalAmount, 0, 'COMMA', 0, 'POINT')} + ' đ'">
+                0 đ
+              </span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <div th:if="${orders == null or #lists.isEmpty(orders)}" class="empty-state">
+        <div style="font-size: 44px; margin-bottom: 12px;">📋</div>
+        <h3>Quý khách chưa có đơn hàng nào</h3>
+        <p style="color: var(--muted); margin: 8px 0 20px;">Hãy đặt những món ăn đầu tiên từ thực đơn của GoD Fine Dining!</p>
+        <a th:href="@{/menu}" class="button-gold">Xem thực đơn &amp; Đặt món</a>
+      </div>
+
+    </div>
+  </section>
+</main>
+
+<footer th:replace="~{fragments/footer :: footer}"></footer>
+
+</body>
+</html>

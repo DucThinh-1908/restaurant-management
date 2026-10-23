@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head(${pageTitle ?: 'Thực đơn | GoD Fine Dining'})}">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Thực đơn | GoD Fine Dining</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<header th:replace="~{fragments/header :: header(${activePage ?: 'menu'})}"></header>
+
+<main>
+  <section class="page-hero">
+    <div>
+      <span class="eyebrow">From our kitchen</span>
+      <h1>Food &amp; Drinks</h1>
+      <p>Thực đơn tinh hoa kết hợp giữa hương vị truyền thống Việt Nam và nghệ thuật ẩm thực đương đại.</p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div class="section-heading">
+        <span class="eyebrow">The menu</span>
+        <h2>Thoughtfully made, beautifully shared</h2>
+        <div class="gold-rule"></div>
+        <p>Mỗi món ăn là một câu chuyện về nguyên liệu tươi sạch bản địa và niềm đam mê sáng tạo của các đầu bếp.</p>
+      </div>
+
+      <!-- Flash message thông báo thêm vào giỏ hàng hoặc nhắc đăng nhập -->
+      <div th:if="${successMessage}" class="alert-box alert-success" style="margin-bottom: 30px;">
+        <span th:text="${successMessage}">Thao tác thành công!</span>
+        <a th:href="@{/cart}" style="margin-left: 15px; font-weight: bold; text-decoration: underline;">Xem giỏ hàng →</a>
+      </div>
+      <div th:if="${errorMessage}" class="alert-box alert-warning" style="margin-bottom: 30px;">
+        <span th:text="${errorMessage}">Vui lòng đăng nhập!</span>
+        <a th:href="@{/login(redirect='/menu')}" style="margin-left: 15px; font-weight: bold; text-decoration: underline;">Đăng nhập ngay →</a>
+      </div>
+
+      <div class="menu-list">
+        <!-- Render động từng nhóm danh mục -->
+        <th:block th:each="entry : ${groupedMenu}">
+          <h2 class="menu-category" th:text="${entry.key}">Khai vị</h2>
+
+          <article class="menu-item" th:each="item : ${entry.value}">
+            <!-- Hình ảnh món ăn sắc nét -->
+            <div class="dish-thumb-wrapper">
+              <img th:if="${item.imageUrl != null}" 
+                   th:src="${item.imageUrl}" 
+                   th:alt="${item.name}" 
+                   class="dish-thumb" 
+                   loading="lazy">
+              <div th:if="${item.imageUrl == null}" class="dish-thumb-placeholder">🍽</div>
+            </div>
+
+            <!-- Thông tin món ăn -->
+            <div class="dish-info">
+              <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                <h3 th:text="${item.name}">Tên món ăn</h3>
+                <span th:if="${item.featured}" class="badge-featured">★ Nổi bật</span>
+              </div>
+              <p th:text="${item.description}">Mô tả thành phần món ăn...</p>
+            </div>
+            
+            <!-- Giá & Nút Thêm vào giỏ -->
+            <div class="dish-actions">
+              <span class="menu-price" th:text="${item.price}">95k</span>
+
+              <!-- Form Thêm món vào giỏ hàng -->
+              <form th:action="@{/cart/add}" method="post" style="display: flex; align-items: center; gap: 6px;">
+                <input type="hidden" name="menuItemId" th:value="${item.id}">
+                <input type="hidden" name="quantity" value="1">
+                <button type="submit" class="btn-add-cart" title="Thêm vào giỏ">
+                  + Thêm món
+                </button>
+              </form>
+            </div>
+          </article>
+        </th:block>
+      </div>
+
+      <div class="section-heading" style="margin-top:65px;margin-bottom:0">
+        <h2>Join us at the table</h2>
+        <p>Để tận hưởng trọn vẹn không gian ẩm thực sang trọng và chu đáo, quý khách có thể gửi yêu cầu đặt bàn trước.</p>
+        <div style="display: flex; justify-content: center; gap: 15px; margin-top: 20px;">
+          <a class="button-gold" th:href="@{/contact#reservation}">Đặt bàn trực tuyến</a>
+          <a class="button-outline" th:href="@{/cart}">Kiểm tra giỏ hàng</a>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer th:replace="~{fragments/footer :: footer}"></footer>
+
+</body>
+</html>

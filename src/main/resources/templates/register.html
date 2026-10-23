@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head('Đăng ký tài khoản | GoD Fine Dining')}">
+  <meta charset="utf-8">
+  <title>Đăng ký tài khoản | GoD Fine Dining</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<header th:replace="~{fragments/header :: header('register')}"></header>
+
+<main>
+  <section class="section" style="padding-top: 60px; min-height: calc(100vh - 250px);">
+    <div class="container" style="max-width: 520px;">
+      <div class="form-card" style="box-shadow: 0 10px 30px rgba(0,0,0,0.05); border-radius: 4px;">
+        <span class="eyebrow" style="text-align: center;">Trở thành thành viên</span>
+        <h2 style="text-align: center; margin-bottom: 25px;">Tạo Tài Khoản</h2>
+
+        <!-- Flash messages -->
+        <div th:if="${errorMessage}" class="alert-box alert-error">
+          <span th:text="${errorMessage}"></span>
+        </div>
+
+        <form th:action="@{/register}" method="post">
+          <div class="form-field" style="margin-bottom: 16px;">
+            <label for="fullName">Họ và tên *</label>
+            <input id="fullName" name="fullName" type="text" required placeholder="Nguyễn Văn A" autofocus>
+          </div>
+
+          <div class="form-field" style="margin-bottom: 16px;">
+            <label for="phone">Số điện thoại *</label>
+            <input id="phone" name="phone" type="tel" required placeholder="0901234567">
+          </div>
+
+          <div class="form-field" style="margin-bottom: 16px;">
+            <label for="email">Địa chỉ Email *</label>
+            <input id="email" name="email" type="email" required placeholder="name@example.com">
+          </div>
+
+          <div class="form-field" style="margin-bottom: 16px;">
+            <label for="password">Mật khẩu *</label>
+            <input id="password" name="password" type="password" required minlength="6" placeholder="Tối thiểu 6 ký tự">
+          </div>
+
+          <div class="form-field" style="margin-bottom: 24px;">
+            <label for="address">Địa chỉ mặc định (giao món tận nơi)</label>
+            <input id="address" name="address" type="text" placeholder="Số nhà, Tên đường, Quận/Huyện, TP">
+          </div>
+
+          <button type="submit" class="button-gold" style="width: 100%; padding: 14px; font-weight: bold;">
+            Đăng ký thành viên
+          </button>
+        </form>
+
+        <div style="margin-top: 25px; padding-top: 20px; border-top: 1px solid var(--line); text-align: center; font-size: 13px; color: var(--muted);">
+          <span>Đã có tài khoản thành viên? </span>
+          <a th:href="@{/login}" style="color: var(--gold-dark); font-weight: bold; text-decoration: underline;">Đăng nhập ngay</a>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer th:replace="~{fragments/footer :: footer}"></footer>
+
+</body>
+</html>

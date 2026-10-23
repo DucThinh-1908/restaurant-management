@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head('Đăng nhập | GoD Fine Dining')}">
+  <meta charset="utf-8">
+  <title>Đăng nhập | GoD Fine Dining</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<header th:replace="~{fragments/header :: header('login')}"></header>
+
+<main>
+  <section class="section" style="padding-top: 60px; min-height: calc(100vh - 250px);">
+    <div class="container" style="max-width: 480px;">
+      <div class="form-card" style="box-shadow: 0 10px 30px rgba(0,0,0,0.05); border-radius: 4px;">
+        <span class="eyebrow" style="text-align: center;">Thành viên GoD Fine Dining</span>
+        <h2 style="text-align: center; margin-bottom: 25px;">Đăng Nhập</h2>
+
+        <!-- Flash messages -->
+        <div th:if="${successMessage}" class="alert-box alert-success">
+          <span th:text="${successMessage}"></span>
+        </div>
+        <div th:if="${errorMessage}" class="alert-box alert-error">
+          <span th:text="${errorMessage}"></span>
+        </div>
+
+        <form th:action="@{/login}" method="post">
+          <input type="hidden" name="redirect" th:value="${redirect}">
+          
+          <div class="form-field" style="margin-bottom: 16px;">
+            <label for="email">Địa chỉ Email *</label>
+            <input id="email" name="email" type="email" required placeholder="name@example.com" autofocus>
+          </div>
+
+          <div class="form-field" style="margin-bottom: 22px;">
+            <label for="password">Mật khẩu *</label>
+            <input id="password" name="password" type="password" required placeholder="••••••••">
+          </div>
+
+          <button type="submit" class="button-gold" style="width: 100%; padding: 14px; font-weight: bold;">
+            Đăng nhập ngay
+          </button>
+        </form>
+
+        <div style="margin-top: 25px; padding-top: 20px; border-top: 1px solid var(--line); text-align: center; font-size: 13px; color: var(--muted);">
+          <span>Chưa có tài khoản thành viên? </span>
+          <a th:href="@{/register}" style="color: var(--gold-dark); font-weight: bold; text-decoration: underline;">Đăng ký ngay tại đây</a>
+        </div>
+
+        <div style="margin-top: 15px; background: #faf7f2; border: 1px dashed var(--gold); padding: 12px; font-size: 11px; color: #666; border-radius: 3px;">
+          <strong>Tài khoản thử nghiệm:</strong><br>
+          • Email: <code>nam.nguyen@gmail.com</code> | Mật khẩu: <code>123456</code><br>
+          • Email: <code>mai.le@gmail.com</code> | Mật khẩu: <code>123456</code>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer th:replace="~{fragments/footer :: footer}"></footer>
+
+</body>
+</html>

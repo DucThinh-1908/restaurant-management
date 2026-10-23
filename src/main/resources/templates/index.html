@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head(${pageTitle ?: 'Home | GoD Fine Dining'})}">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Home | GoD Fine Dining</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<header th:replace="~{fragments/header :: header(${activePage ?: 'home'})}"></header>
+
+<main>
+  <section class="home-hero">
+    <div class="home-content">
+      <span class="eyebrow">A taste of Vietnamese heritage</span>
+      <h1>GOD RESTAURANT<br>VIETNAMESE</h1>
+      <p>Discover a thoughtful expression of Vietnamese cuisine, where local ingredients, traditional inspiration and contemporary dining come together.</p>
+      <div class="home-actions">
+        <a class="button-gold" th:href="@{/menu}" href="/menu">Explore our menu</a>
+        <a class="button-outline" th:href="@{/contact#reservation}" href="/contact#reservation">Reserve a table</a>
+      </div>
+      <div class="home-highlights">
+        <span>✦ Seasonal ingredients</span>
+        <span>✦ Vietnamese flavours</span>
+        <span>✦ Warm hospitality</span>
+      </div>
+    </div>
+  </section>
+  <section class="section">
+    <div class="container two-col">
+      <div class="copy">
+        <span class="eyebrow">Welcome to GoD</span>
+        <h2>A modern table rooted in tradition</h2>
+        <p>We celebrate the richness of Vietnamese food culture through carefully selected ingredients, balanced flavours and a relaxed, elegant atmosphere.</p>
+        <p>Whether it is an intimate dinner or a gathering with friends, every visit is an invitation to slow down and enjoy the moment.</p>
+        <a class="button-outline" th:href="@{/about}" href="/about">Discover our story</a>
+      </div>
+      <div class="photo-panel" role="img" aria-label="Không gian nhà hàng ấm cúng"></div>
+    </div>
+  </section>
+  <section class="section" style="background:var(--cream)">
+    <div class="container">
+      <div class="section-heading">
+        <span class="eyebrow">The GoD experience</span>
+        <h2>Made for memorable moments</h2>
+        <div class="gold-rule"></div>
+        <p>Good food, thoughtful service and a welcoming space to share.</p>
+      </div>
+      <div class="feature-grid">
+        <article class="feature-card">
+          <div class="feature-number">01</div>
+          <h3>Local ingredients</h3>
+          <p>Inspired by seasonal produce and the distinctive flavours of Vietnam.</p>
+        </article>
+        <article class="feature-card">
+          <div class="feature-number">02</div>
+          <h3>Crafted with care</h3>
+          <p>Every dish is prepared with attention to flavour, texture and presentation.</p>
+        </article>
+        <article class="feature-card">
+          <div class="feature-number">03</div>
+          <h3>Warm hospitality</h3>
+          <p>A comfortable setting for celebrations, family meals and quiet evenings.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer th:replace="~{fragments/footer :: footer}"></footer>
+
+</body>
+</html>

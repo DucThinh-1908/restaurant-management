@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head('Giỏ hàng của bạn | GoD Fine Dining')}">
+  <meta charset="utf-8">
+  <title>Giỏ hàng của bạn | GoD Fine Dining</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<header th:replace="~{fragments/header :: header('cart')}"></header>
+
+<main>
+  <section class="page-hero" style="min-height: 240px; padding: 45px 24px;">
+    <div>
+      <span class="eyebrow">Your Selection</span>
+      <h1 style="font-size: clamp(30px, 4vw, 48px);">Giỏ Hàng Món Ăn</h1>
+      <p>Kiểm tra các món ăn quý khách đã chọn trước khi tiến hành xác nhận đặt món.</p>
+    </div>
+  </section>
+
+  <section class="section" style="padding-top: 50px;">
+    <div class="container" style="max-width: 900px;">
+
+      <!-- Flash messages -->
+      <div th:if="${successMessage}" class="alert-box alert-success" style="margin-bottom: 25px;">
+        <span th:text="${successMessage}"></span>
+      </div>
+      <div th:if="${errorMessage}" class="alert-box alert-error" style="margin-bottom: 25px;">
+        <span th:text="${errorMessage}"></span>
+      </div>
+
+      <!-- Khi giỏ hàng có món -->
+      <div th:if="${cartItems != null and not #lists.isEmpty(cartItems)}">
+        <div class="cart-table-wrapper">
+          <table class="cart-table">
+            <thead>
+              <tr>
+                <th style="text-align: left;">Món ăn</th>
+                <th style="text-align: right;">Đơn giá</th>
+                <th style="text-align: center;">Số lượng</th>
+                <th style="text-align: right;">Thành tiền</th>
+                <th style="text-align: center;">Xóa</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr th:each="item : ${cartItems}">
+                <td>
+                  <div style="display: flex; align-items: center; gap: 14px;">
+                    <img th:if="${item.menuItem.imageUrl != null}" 
+                         th:src="${item.menuItem.imageUrl}" 
+                         th:alt="${item.menuItem.name}" 
+                         style="width: 55px; height: 55px; object-fit: cover; border-radius: 4px; border: 1px solid var(--line);">
+                    <div>
+                      <strong th:text="${item.menuItem.name}" style="display: block; font-size: 15px;">Tên món</strong>
+                      <small th:text="${item.menuItem.category}" style="color: var(--muted);"></small>
+                      <p th:if="${item.note != null and not #strings.isEmpty(item.note)}" 
+                         th:text="'Ghi chú: ' + ${item.note}" 
+                         style="margin: 4px 0 0; font-size: 12px; color: var(--gold-dark); font-style: italic;"></p>
+                    </div>
+                  </div>
+                </td>
+                <td style="text-align: right; font-family: var(--serif); font-size: 16px;" 
+                    th:text="${item.menuItem.price}">
+                  95k
+                </td>
+                <td style="text-align: center;">
+                  <form th:action="@{/cart/update}" method="post" style="display: inline-flex; align-items: center; gap: 4px;">
+                    <input type="hidden" name="cartItemId" th:value="${item.id}">
+                    <button type="submit" name="quantity" th:value="${item.quantity - 1}" class="qty-btn" title="Giảm">-</button>
+                    <span th:text="${item.quantity}" style="min-width: 28px; font-weight: bold; text-align: center;">1</span>
+                    <button type="submit" name="quantity" th:value="${item.quantity + 1}" class="qty-btn" title="Tăng">+</button>
+                  </form>
+                </td>
+                <td style="text-align: right; font-family: var(--serif); font-size: 17px; font-weight: bold; color: var(--gold-dark);">
+                  <span th:text="${#numbers.formatDecimal(item.subtotal, 0, 'COMMA', 0, 'POINT')} + ' đ'">95,000 đ</span>
+                </td>
+                <td style="text-align: center;">
+                  <form th:action="@{/cart/remove}" method="post">
+                    <input type="hidden" name="cartItemId" th:value="${item.id}">
+                    <button type="submit" class="remove-btn" title="Xóa món">✕</button>
+                  </form>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Tóm tắt thanh toán -->
+        <div class="cart-summary-box">
+          <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+            <span>Tổng tiền món:</span>
+            <span style="font-family: var(--serif); font-size: 18px; font-weight: bold;" 
+                  th:text="${#numbers.formatDecimal(totalAmount, 0, 'COMMA', 0, 'POINT')} + ' đ'">
+              0 đ
+            </span>
+          </div>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 12px; color: var(--muted); font-size: 13px;">
+            <span>Thuế VAT tạm tính (8%):</span>
+            <span th:text="${#numbers.formatDecimal(totalAmount * 0.08, 0, 'COMMA', 0, 'POINT')} + ' đ'">0 đ</span>
+          </div>
+          <div style="border-top: 1px solid var(--line); padding-top: 12px; display: flex; justify-content: space-between; font-size: 18px; font-weight: bold;">
+            <span>Tổng thanh toán:</span>
+            <span style="color: var(--gold-dark); font-family: var(--serif); font-size: 22px;" 
+                  th:text="${#numbers.formatDecimal(totalAmount * 1.08, 0, 'COMMA', 0, 'POINT')} + ' đ'">
+              0 đ
+            </span>
+          </div>
+
+          <div style="display: flex; gap: 15px; margin-top: 25px; justify-content: flex-end;">
+            <a th:href="@{/menu}" class="button-outline">← Chọn thêm món</a>
+            <a th:href="@{/checkout}" class="button-gold" style="padding: 14px 28px; font-size: 11px;">Tiến hành đặt món →</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Khi giỏ hàng trống -->
+      <div th:if="${cartItems == null or #lists.isEmpty(cartItems)}" class="empty-state">
+        <div style="font-size: 48px; margin-bottom: 15px;">🛒</div>
+        <h3>Giỏ hàng của bạn đang trống</h3>
+        <p style="color: var(--muted); max-width: 420px; margin: 10px auto 25px;">Hãy khám phá các món ăn hấp dẫn trong thực đơn của nhà hàng và chọn món cho bữa ăn của bạn.</p>
+        <a th:href="@{/menu}" class="button-gold">Khám phá thực đơn ngay</a>
+      </div>
+
+    </div>
+  </section>
+</main>
+
+<footer th:replace="~{fragments/footer :: footer}"></footer>
+
+</body>
+</html>

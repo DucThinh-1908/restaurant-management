@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head('Lịch sử đặt bàn | GoD Fine Dining')}">
+  <meta charset="utf-8">
+  <title>Lịch sử đặt bàn | GoD Fine Dining</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<header th:replace="~{fragments/header :: header('account')}"></header>
+
+<main>
+  <section class="page-hero" style="min-height: 220px; padding: 40px 24px;">
+    <div>
+      <span class="eyebrow">Customer Portal</span>
+      <h1 style="font-size: clamp(28px, 4vw, 44px);">Lịch Sử Đặt Bàn</h1>
+      <p>Theo dõi trạng thái tiếp nhận và xác nhận bàn của bộ phận Lễ tân nhà hàng.</p>
+    </div>
+  </section>
+
+  <section class="section" style="padding-top: 45px;">
+    <div class="container" style="max-width: 900px;">
+
+      <div style="margin-bottom: 25px;">
+        <a th:href="@{/my-account}" style="font-size: 13px; color: var(--gold-dark); text-decoration: underline;">← Quay lại trang tài khoản</a>
+      </div>
+
+      <div th:if="${reservations != null and not #lists.isEmpty(reservations)}">
+        <div th:each="res : ${reservations}" class="order-detail-card" style="background: white; border: 1px solid var(--line); border-radius: 4px; padding: 22px; margin-bottom: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.03);">
+          
+          <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--line); padding-bottom: 14px; margin-bottom: 15px;">
+            <div>
+              <strong style="font-family: var(--serif); font-size: 18px;" th:text="'Yêu cầu đặt bàn #' + ${res.id}">Đặt bàn #100</strong>
+              <div style="font-size: 12px; color: var(--muted); margin-top: 2px;" th:text="'Gửi lúc: ' + ${res.formattedCreatedAt}"></div>
+            </div>
+            <div>
+              <span class="badge" th:classappend="${res.statusBadgeClass}" th:text="${res.statusDisplayName}">Chờ duyệt</span>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; font-size: 13px; margin-bottom: 15px;">
+            <div>
+              <span style="color: var(--muted); display: block;">Ngày dùng bữa:</span>
+              <strong th:text="${res.date}">2026-10-24</strong>
+            </div>
+            <div>
+              <span style="color: var(--muted); display: block;">Khung giờ:</span>
+              <strong th:text="${res.time}">19:00 – 22:00</strong>
+            </div>
+            <div>
+              <span style="color: var(--muted); display: block;">Số lượng khách:</span>
+              <strong th:text="${res.guests}">3–4 guests</strong>
+            </div>
+          </div>
+
+          <div th:if="${res.message != null and not #strings.isEmpty(res.message)}" 
+               style="background: #faf7f2; padding: 12px 16px; border-radius: 4px; font-size: 13px;">
+            <span style="color: var(--muted);">Yêu cầu đặc biệt: </span>
+            <span th:text="${res.message}" style="font-style: italic;"></span>
+          </div>
+
+        </div>
+      </div>
+
+      <div th:if="${reservations == null or #lists.isEmpty(reservations)}" class="empty-state">
+        <div style="font-size: 44px; margin-bottom: 12px;">🍽</div>
+        <h3>Quý khách chưa có yêu cầu đặt bàn nào</h3>
+        <p style="color: var(--muted); margin: 8px 0 20px;">Hãy đặt trước bàn ăn để nhà hàng đón tiếp quý khách chu đáo nhất.</p>
+        <a th:href="@{/contact#reservation}" class="button-gold">Gửi yêu cầu đặt bàn</a>
+      </div>
+
+    </div>
+  </section>
+</main>
+
+<footer th:replace="~{fragments/footer :: footer}"></footer>
+
+</body>
+</html>

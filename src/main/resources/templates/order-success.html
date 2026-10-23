@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head('Đặt món thành công | GoD Fine Dining')}">
+  <meta charset="utf-8">
+  <title>Đặt món thành công | GoD Fine Dining</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<header th:replace="~{fragments/header :: header('cart')}"></header>
+
+<main>
+  <section class="section" style="padding-top: 60px;">
+    <div class="container" style="max-width: 680px;">
+      
+      <div class="form-card" style="text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.06); border-radius: 6px;">
+        <div style="font-size: 54px; color: #2e6830; margin-bottom: 10px;">✓</div>
+        <span class="eyebrow" style="color: #2e6830;">Đặt món thành công</span>
+        <h2 style="margin: 0 0 15px;">Cảm ơn quý khách!</h2>
+        <p style="color: var(--muted); max-width: 480px; margin: 0 auto 25px;">
+          Đơn hàng của quý khách đã được tiếp nhận và chuyển đến bộ phận Bếp để chuẩn bị phục vụ.
+        </p>
+
+        <!-- Thông tin tóm tắt đơn hàng -->
+        <div style="background: #faf7f2; border: 1px solid var(--line); padding: 20px; text-align: left; border-radius: 4px; margin-bottom: 25px;">
+          <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--line); padding-bottom: 10px; margin-bottom: 12px;">
+            <span>Mã đơn hàng:</span>
+            <strong style="color: var(--gold-dark); font-family: monospace; font-size: 16px;" th:text="${order.orderCode}">ORD-001</strong>
+          </div>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+            <span>Hình thức nhận món:</span>
+            <strong th:text="${order.orderTypeDisplayName}">Giao hàng tận nơi</strong>
+          </div>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+            <span>Thời gian đặt:</span>
+            <span th:text="${order.formattedCreatedAt}">12:30 - 23/10/2026</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+            <span>Số điện thoại nhận:</span>
+            <span th:text="${order.customerPhone}">0912345678</span>
+          </div>
+          <div th:if="${order.deliveryAddress != null and not #strings.isEmpty(order.deliveryAddress)}" style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+            <span>Địa chỉ giao hàng:</span>
+            <span th:text="${order.deliveryAddress}" style="max-width: 65%; text-align: right;">Đà Nẵng</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+            <span>Trạng thái đơn:</span>
+            <span class="badge" th:classappend="${order.statusBadgeClass}" th:text="${order.statusDisplayName}">Chờ xác nhận</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; border-top: 1px solid var(--line); padding-top: 10px; margin-top: 12px; font-weight: bold; font-size: 16px;">
+            <span>Tổng thanh toán:</span>
+            <span style="color: var(--gold-dark); font-family: var(--serif); font-size: 20px;" 
+                  th:text="${#numbers.formatDecimal(order.totalAmount, 0, 'COMMA', 0, 'POINT')} + ' đ'">
+              0 đ
+            </span>
+          </div>
+        </div>
+
+        <!-- Hướng dẫn chuyển khoản nếu chọn BANK_TRANSFER -->
+        <div th:if="${order.paymentMethod == 'BANK_TRANSFER'}" 
+             style="background: #fdf6ec; border: 1px solid #faecd8; padding: 18px; border-radius: 4px; text-align: left; margin-bottom: 25px;">
+          <h4 style="margin: 0 0 8px; color: #b88230;">Thông tin chuyển khoản ngân hàng:</h4>
+          <p style="margin: 0; font-size: 13px; line-height: 1.6; color: #555;">
+            • Ngân hàng: <strong>Vietcombank - Chi nhánh Đà Nẵng</strong><br>
+            • Số tài khoản: <strong>9999 8888 6666</strong><br>
+            • Chủ tài khoản: <strong>NHA HANG DUC THINH</strong><br>
+            • Nội dung chuyển khoản: <strong style="color: #b88230;" th:text="${order.orderCode}">ORD-XXX</strong>
+          </p>
+        </div>
+
+        <div style="display: flex; justify-content: center; gap: 15px;">
+          <a th:href="@{/my-orders}" class="button-gold">Xem đơn hàng của tôi</a>
+          <a th:href="@{/menu}" class="button-outline">Tiếp tục xem thực đơn</a>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+</main>
+
+<footer th:replace="~{fragments/footer :: footer}"></footer>
+
+</body>
+</html>

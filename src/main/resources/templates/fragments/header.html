@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<body>
+<header class="site-header" th:fragment="header(activePage)">
+  <div class="header-inner">
+    <a class="brand" th:href="@{/}" href="/" aria-label="GoD Fine Dining trang chủ">
+      <span class="brand-mark">DUC THINH</span><span class="brand-sub">RESTAURANT</span>
+    </a>
+    
+    <button class="menu-toggle" aria-label="Mở menu" aria-expanded="false">MENU ☰</button>
+    
+    <nav class="main-nav" aria-label="Điều hướng chính">
+      <a th:href="@{/}" href="/" th:classappend="${activePage == 'home'} ? 'active' : ''">HOME</a>
+      <a th:href="@{/about}" href="/about" th:classappend="${activePage == 'about'} ? 'active' : ''">ABOUT</a>
+      <a th:href="@{/menu}" href="/menu" th:classappend="${activePage == 'menu'} ? 'active' : ''">MENU</a>
+      <a th:href="@{/contact}" href="/contact" th:classappend="${activePage == 'contact'} ? 'active' : ''">CONTACT</a>
+    </nav>
+
+    <div class="header-user-actions">
+      <!-- Icon Giỏ Hàng -->
+      <a th:href="@{/cart}" class="cart-btn" aria-label="Giỏ hàng">
+        <span>🛒 GIỎ HÀNG</span>
+        <span class="cart-badge" th:text="${cartItemCount ?: 0}">0</span>
+      </a>
+
+      <!-- Nếu khách đã đăng nhập -->
+      <div th:if="${loggedInCustomer != null}" class="user-dropdown">
+        <a th:href="@{/my-account}" class="user-greeting">
+          <span class="user-avatar">👤</span>
+          <span th:text="${loggedInCustomer.fullName}">Khách Hàng</span>
+        </a>
+        <div class="dropdown-content">
+          <a th:href="@{/my-account}">Tài khoản của tôi</a>
+          <a th:href="@{/my-orders}">Đơn đặt món</a>
+          <a th:href="@{/my-reservations}">Lịch sử đặt bàn</a>
+          <hr style="border:0; border-top:1px solid #eee; margin:4px 0;">
+          <a th:href="@{/logout}" style="color:#b23b3b;">Đăng xuất</a>
+        </div>
+      </div>
+
+      <!-- Nếu khách chưa đăng nhập -->
+      <div th:if="${loggedInCustomer == null}" class="auth-buttons">
+        <a th:href="@{/login}" class="btn-login">Đăng nhập</a>
+        <a th:href="@{/register}" class="btn-register">Đăng ký</a>
+      </div>
+
+      <a class="header-action" th:href="@{/contact#reservation}" href="/contact#reservation">Đặt bàn online</a>
+    </div>
+  </div>
+</header>
+</body>
+</html>

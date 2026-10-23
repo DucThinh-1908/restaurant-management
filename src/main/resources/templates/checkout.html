@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head('Xác nhận đặt món | GoD Fine Dining')}">
+  <meta charset="utf-8">
+  <title>Xác nhận đặt món | GoD Fine Dining</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<header th:replace="~{fragments/header :: header('cart')}"></header>
+
+<main>
+  <section class="page-hero" style="min-height: 240px; padding: 45px 24px;">
+    <div>
+      <span class="eyebrow">Checkout</span>
+      <h1 style="font-size: clamp(30px, 4vw, 48px);">Xác Nhận Đặt Món</h1>
+      <p>Hoàn tất thông tin nhận món để nhà bếp chuẩn bị phục vụ quý khách tốt nhất.</p>
+    </div>
+  </section>
+
+  <section class="section" style="padding-top: 50px;">
+    <div class="container" style="max-width: 1000px;">
+
+      <div th:if="${errorMessage}" class="alert-box alert-error" style="margin-bottom: 25px;">
+        <span th:text="${errorMessage}"></span>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1.2fr .8fr; gap: 40px; align-items: start;">
+        
+        <!-- Form thông tin giao hàng & đặt món -->
+        <div class="form-card" style="box-shadow: 0 4px 20px rgba(0,0,0,0.04);">
+          <span class="eyebrow">Thông tin nhận món</span>
+          <h2 style="font-size: 26px; margin-bottom: 20px;">Chi tiết đơn hàng</h2>
+
+          <form th:action="@{/checkout}" method="post">
+            
+            <!-- Chọn hình thức đặt món -->
+            <div style="margin-bottom: 22px;">
+              <label style="display: block; font-size: 11px; text-transform: uppercase; letter-spacing: .12em; margin-bottom: 8px; font-weight: bold;">
+                Hình thức nhận món *
+              </label>
+              <div style="display: flex; gap: 20px;">
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                  <input type="radio" name="orderType" value="DELIVERY" checked>
+                  <span>Giao hàng tận nơi</span>
+                </label>
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                  <input type="radio" name="orderType" value="TAKE_AWAY">
+                  <span>Đến lấy mang về</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Họ tên khách hàng -->
+            <div class="form-field" style="margin-bottom: 16px;">
+              <label>Họ và tên người nhận</label>
+              <input type="text" th:value="${customer.fullName}" readonly style="background: #f0ece3; color: #555;">
+            </div>
+
+            <!-- Số điện thoại nhận món -->
+            <div class="form-field" style="margin-bottom: 16px;">
+              <label for="contactPhone">Số điện thoại liên hệ nhận món *</label>
+              <input id="contactPhone" name="contactPhone" type="tel" th:value="${customer.phone}" required placeholder="Số điện thoại của bạn">
+            </div>
+
+            <!-- Địa chỉ giao hàng -->
+            <div class="form-field" style="margin-bottom: 16px;">
+              <label for="deliveryAddress">Địa chỉ giao hàng (áp dụng khi chọn Giao tận nơi)</label>
+              <input id="deliveryAddress" name="deliveryAddress" type="text" th:value="${customer.address}" placeholder="Số nhà, Tên đường, Phường/Xã, Quận/Huyện">
+            </div>
+
+            <!-- Ghi chú cho nhà bếp -->
+            <div class="form-field" style="margin-bottom: 22px;">
+              <label for="note">Ghi chú cho đầu bếp / Shipper</label>
+              <textarea id="note" name="note" rows="3" placeholder="Ví dụ: Không hành, ít cay, giao đúng lúc 12h trưa..."></textarea>
+            </div>
+
+            <!-- Phương thức thanh toán -->
+            <div style="margin-bottom: 25px;">
+              <label style="display: block; font-size: 11px; text-transform: uppercase; letter-spacing: .12em; margin-bottom: 8px; font-weight: bold;">
+                Phương thức thanh toán *
+              </label>
+              <div style="display: flex; flex-direction: column; gap: 10px;">
+                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 10px; border: 1px solid var(--line); border-radius: 4px;">
+                  <input type="radio" name="paymentMethod" value="CASH" checked>
+                  <div>
+                    <strong>Tiền mặt khi nhận món (COD)</strong>
+                    <div style="font-size: 12px; color: var(--muted);">Thanh toán trực tiếp cho nhân viên giao hàng hoặc tại quầy khi nhận.</div>
+                  </div>
+                </label>
+                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 10px; border: 1px solid var(--line); border-radius: 4px;">
+                  <input type="radio" name="paymentMethod" value="BANK_TRANSFER">
+                  <div>
+                    <strong>Chuyển khoản QR ngân hàng</strong>
+                    <div style="font-size: 12px; color: var(--muted);">Quét mã VietQR tiện lợi sau khi bấm xác nhận đặt đơn.</div>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            <button type="submit" class="button-gold" style="width: 100%; padding: 15px; font-size: 12px; font-weight: bold;">
+              Xác nhận &amp; Đặt món ngay
+            </button>
+          </form>
+        </div>
+
+        <!-- Cột tóm tắt giỏ hàng bên phải -->
+        <div style="background: white; border: 1px solid var(--line); padding: 25px; border-radius: 4px; box-shadow: 0 4px 15px rgba(0,0,0,0.03);">
+          <h3 style="font-size: 20px; font-family: var(--serif); margin: 0 0 15px; border-bottom: 1px solid var(--line); padding-bottom: 10px;">
+            Món ăn đã chọn
+          </h3>
+
+          <div style="max-height: 280px; overflow-y: auto; margin-bottom: 15px;">
+            <div th:each="item : ${cartItems}" style="display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 13px;">
+              <div>
+                <strong th:text="${item.menuItem.name}">Tên món</strong>
+                <div style="color: var(--muted);" th:text="'Số lượng: ' + ${item.quantity}">x 1</div>
+              </div>
+              <div style="font-family: var(--serif); font-weight: bold;" 
+                   th:text="${#numbers.formatDecimal(item.subtotal, 0, 'COMMA', 0, 'POINT')} + ' đ'">
+                95,000 đ
+              </div>
+            </div>
+          </div>
+
+          <div style="border-top: 1px dashed var(--line); padding-top: 15px; font-size: 13px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+              <span>Tổng tiền món:</span>
+              <span th:text="${#numbers.formatDecimal(subtotal, 0, 'COMMA', 0, 'POINT')} + ' đ'">0 đ</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px; color: var(--muted);">
+              <span>Thuế VAT (8%):</span>
+              <span th:text="${#numbers.formatDecimal(taxAmount, 0, 'COMMA', 0, 'POINT')} + ' đ'">0 đ</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line); font-size: 16px; font-weight: bold;">
+              <span>Tổng thanh toán:</span>
+              <span style="color: var(--gold-dark); font-family: var(--serif); font-size: 20px;" 
+                    th:text="${#numbers.formatDecimal(totalAmount, 0, 'COMMA', 0, 'POINT')} + ' đ'">
+                0 đ
+              </span>
+            </div>
+          </div>
+
+          <div style="margin-top: 20px; text-align: center;">
+            <a th:href="@{/cart}" style="font-size: 12px; color: var(--gold-dark); text-decoration: underline;">← Quay lại chỉnh sửa giỏ hàng</a>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+</main>
+
+<footer th:replace="~{fragments/footer :: footer}"></footer>
+
+</body>
+</html>

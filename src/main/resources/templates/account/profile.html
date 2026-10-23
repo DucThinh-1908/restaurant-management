@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head('Tài khoản của tôi | GoD Fine Dining')}">
+  <meta charset="utf-8">
+  <title>Tài khoản của tôi | GoD Fine Dining</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<header th:replace="~{fragments/header :: header('account')}"></header>
+
+<main>
+  <section class="page-hero" style="min-height: 220px; padding: 40px 24px;">
+    <div>
+      <span class="eyebrow">Customer Portal</span>
+      <h1 style="font-size: clamp(28px, 4vw, 44px);">Tài Khoản Thành Viên</h1>
+      <p>Quản lý thông tin cá nhân, điểm tích lũy và theo dõi lịch sử dịch vụ tại GoD Fine Dining.</p>
+    </div>
+  </section>
+
+  <section class="section" style="padding-top: 45px;">
+    <div class="container" style="max-width: 950px;">
+
+      <!-- Thẻ tổng quan điểm tích lũy & chào mừng -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-bottom: 35px;">
+        <div class="stat-card">
+          <span class="stat-title">Điểm tích lũy thành viên</span>
+          <div class="stat-value" style="color: var(--gold-dark);" th:text="${customer.loyaltyPoints} + ' điểm'">150 điểm</div>
+          <small style="color: var(--muted);">Tích 1 điểm mỗi 50.000 đ chi tiêu</small>
+        </div>
+
+        <div class="stat-card">
+          <span class="stat-title">Đơn đặt món</span>
+          <div class="stat-value" th:text="${orderCount} + ' đơn'">1 đơn</div>
+          <a th:href="@{/my-orders}" style="font-size: 12px; color: var(--gold-dark); text-decoration: underline;">Xem chi tiết các đơn →</a>
+        </div>
+
+        <div class="stat-card">
+          <span class="stat-title">Lịch sử đặt bàn</span>
+          <div class="stat-value" th:text="${reservationCount} + ' lần'">1 lần</div>
+          <a th:href="@{/my-reservations}" style="font-size: 12px; color: var(--gold-dark); text-decoration: underline;">Xem lịch sử đặt bàn →</a>
+        </div>
+      </div>
+
+      <!-- Khung thông tin cá nhân -->
+      <div style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 35px; align-items: start;">
+        
+        <div class="form-card" style="box-shadow: 0 4px 20px rgba(0,0,0,0.04);">
+          <span class="eyebrow">Thông tin tài khoản</span>
+          <h2 style="font-size: 22px; margin-bottom: 20px;">Hồ sơ cá nhân</h2>
+
+          <div style="display: flex; flex-direction: column; gap: 14px; font-size: 14px;">
+            <div>
+              <strong style="display: block; font-size: 11px; text-transform: uppercase; color: var(--muted); letter-spacing: .1em;">Họ và tên</strong>
+              <span th:text="${customer.fullName}" style="font-size: 16px; font-weight: 600;">Nguyễn Hoàng Nam</span>
+            </div>
+            <div>
+              <strong style="display: block; font-size: 11px; text-transform: uppercase; color: var(--muted); letter-spacing: .1em;">Địa chỉ Email</strong>
+              <span th:text="${customer.email}">nam.nguyen@gmail.com</span>
+            </div>
+            <div>
+              <strong style="display: block; font-size: 11px; text-transform: uppercase; color: var(--muted); letter-spacing: .1em;">Số điện thoại</strong>
+              <span th:text="${customer.phone}">0912345678</span>
+            </div>
+            <div>
+              <strong style="display: block; font-size: 11px; text-transform: uppercase; color: var(--muted); letter-spacing: .1em;">Địa chỉ mặc định</strong>
+              <span th:text="${customer.address ?: 'Chưa cập nhật'}">Đà Nẵng</span>
+            </div>
+            <div style="padding-top: 15px; border-top: 1px solid var(--line);">
+              <a th:href="@{/logout}" style="color: #b23b3b; font-size: 13px; text-decoration: underline;">Đăng xuất khỏi tài khoản</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Danh sách đơn hàng gần đây -->
+        <div>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h3 style="font-family: var(--serif); font-size: 20px; margin: 0;">Đơn đặt món gần nhất</h3>
+            <a th:href="@{/my-orders}" style="font-size: 12px; color: var(--gold-dark); text-decoration: underline;">Xem tất cả</a>
+          </div>
+
+          <div th:if="${recentOrders != null and not #lists.isEmpty(recentOrders)}">
+            <div th:each="order : ${recentOrders}" class="account-item-card">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <strong style="color: var(--gold-dark); font-family: monospace;" th:text="${order.orderCode}">ORD-001</strong>
+                <span class="badge" th:classappend="${order.statusBadgeClass}" th:text="${order.statusDisplayName}">Chờ duyệt</span>
+              </div>
+              <div style="font-size: 13px; color: var(--muted); margin-bottom: 8px;" th:text="${order.formattedCreatedAt}"></div>
+              <div style="display: flex; justify-content: space-between; font-size: 14px; font-weight: bold;">
+                <span th:text="${order.items.size()} + ' món ăn'">2 món</span>
+                <span style="color: var(--ink); font-family: var(--serif);" 
+                      th:text="${#numbers.formatDecimal(order.totalAmount, 0, 'COMMA', 0, 'POINT')} + ' đ'">480,000 đ</span>
+              </div>
+            </div>
+          </div>
+
+          <div th:if="${recentOrders == null or #lists.isEmpty(recentOrders)}" style="background: white; border: 1px dashed var(--line); padding: 25px; text-align: center; border-radius: 4px;">
+            <p style="color: var(--muted); margin: 0 0 10px;">Quý khách chưa có đơn đặt món nào.</p>
+            <a th:href="@{/menu}" class="button-gold" style="font-size: 10px; padding: 10px 16px;">Đặt món ngay</a>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+</main>
+
+<footer th:replace="~{fragments/footer :: footer}"></footer>
+
+</body>
+</html>

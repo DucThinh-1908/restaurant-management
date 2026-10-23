@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head(${pageTitle ?: 'About | GoD Fine Dining'})}">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>About | GoD Fine Dining</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<header th:replace="~{fragments/header :: header(${activePage ?: 'about'})}"></header>
+
+<main>
+  <section class="page-hero">
+    <div>
+      <span class="eyebrow">Our story</span>
+      <h1>About GoD</h1>
+      <p>A Vietnamese dining experience shaped by culture, craft and hospitality.</p>
+    </div>
+  </section>
+  <section class="section">
+    <div class="container two-col">
+      <div class="photo-panel" role="img" aria-label="Không gian nhà hàng ánh sáng ấm"></div>
+      <div class="copy">
+        <span class="eyebrow">Who we are</span>
+        <h2>Honouring the familiar, discovering the new</h2>
+        <p>At GoD Fine Dining, our philosophy begins with respect for Vietnamese culinary heritage. We take inspiration from regional dishes, family traditions and the ingredients that make our food culture so distinctive.</p>
+        <p>Our approach is contemporary but never forgets its roots: thoughtful preparation, balanced flavours and genuine hospitality at every table.</p>
+        <p>Located in Da Nang, GoD is imagined as a place to celebrate both everyday moments and special occasions.</p>
+      </div>
+    </div>
+  </section>
+  <section class="section" style="background:var(--cream)">
+    <div class="container">
+      <div class="section-heading">
+        <span class="eyebrow">Our philosophy</span>
+        <h2>Three things that guide us</h2>
+        <div class="gold-rule"></div>
+      </div>
+      <div class="feature-grid">
+        <article class="feature-card">
+          <div class="feature-number">01</div>
+          <h3>Respect the ingredient</h3>
+          <p>Choose ingredients thoughtfully and let their natural character shine.</p>
+        </article>
+        <article class="feature-card">
+          <div class="feature-number">02</div>
+          <h3>Celebrate our roots</h3>
+          <p>Keep Vietnamese flavours and stories at the heart of every experience.</p>
+        </article>
+        <article class="feature-card">
+          <div class="feature-number">03</div>
+          <h3>Welcome everyone</h3>
+          <p>Make every guest feel comfortable, cared for and at home.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+  <section class="section">
+    <div class="container section-heading">
+      <span class="eyebrow">Come and meet us</span>
+      <h2>Your table is waiting</h2>
+      <p>We look forward to welcoming you for your next meal in Da Nang.</p>
+      <a class="button-gold" th:href="@{/contact#reservation}" href="/contact#reservation">Plan your visit</a>
+    </div>
+  </section>
+</main>
+
+<footer th:replace="~{fragments/footer :: footer}"></footer>
+
+</body>
+</html>

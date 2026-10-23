@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head(${pageTitle ?: 'Contact | GoD Fine Dining'})}">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Contact | GoD Fine Dining</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<header th:replace="~{fragments/header :: header(${activePage ?: 'contact'})}"></header>
+
+<main>
+  <section class="page-hero">
+    <div>
+      <span class="eyebrow">We would love to hear from you</span>
+      <h1>Contact &amp; Reservations</h1>
+      <p>Get in touch with our team or send a request for your next visit.</p>
+    </div>
+  </section>
+  <section class="section" id="reservation">
+    <div class="container contact-grid">
+      <div class="contact-info">
+        <span class="eyebrow">Visit GoD</span>
+        <h2>Let's plan your visit</h2>
+        <p style="color:var(--muted)">For reservation requests, private gatherings or general questions, leave us a message. Our team will follow up to confirm the details.</p>
+        <div class="info-row">
+          <strong>Address</strong>
+          <span>Da Nang, Viet Nam<br><small>Replace this with the restaurant's real address.</small></span>
+        </div>
+        <div class="info-row">
+          <strong>Phone</strong>
+          <a href="tel:+84236000000">+84 236 000 000</a>
+        </div>
+        <div class="info-row">
+          <strong>Email</strong>
+          <a href="mailto:hello@godrestaurant.vn">hello@godrestaurant.vn</a>
+        </div>
+        <div class="info-row">
+          <strong>Opening hours</strong>
+          <span>Daily · 10:00 – 22:00</span>
+        </div>
+      </div>
+      <div class="form-card">
+        <span class="eyebrow">Reservation request</span>
+        <h2>Request a table</h2>
+
+        <!-- Flash success notification -->
+        <div th:if="${successMessage}" class="notice show" style="margin-bottom: 20px; padding: 12px; background: #eef7ee; color: #2e6830; border: 1px solid #c2e2c4; font-size: 13px;">
+          <span th:text="${successMessage}">Cảm ơn bạn! Yêu cầu đặt bàn đã được gửi thành công.</span>
+        </div>
+
+        <form th:action="@{/contact/reservation}" th:object="${reservationRequest}" method="post">
+          <div class="form-grid">
+            <div class="form-field">
+              <label for="name">Full name *</label>
+              <input id="name" th:field="*{name}" type="text" autocomplete="name" required placeholder="Your name">
+            </div>
+            <div class="form-field">
+              <label for="phone">Phone number *</label>
+              <input id="phone" th:field="*{phone}" type="tel" autocomplete="tel" required placeholder="Your phone number">
+            </div>
+            <div class="form-field">
+              <label for="date">Preferred date *</label>
+              <input id="date" th:field="*{date}" type="date" required>
+            </div>
+            <div class="form-field">
+              <label for="time">Preferred time</label>
+              <select id="time" th:field="*{time}">
+                <option value="">Select a time</option>
+                <option value="10:00 – 12:00">10:00 – 12:00</option>
+                <option value="12:00 – 14:00">12:00 – 14:00</option>
+                <option value="14:00 – 17:00">14:00 – 17:00</option>
+                <option value="17:00 – 19:00">17:00 – 19:00</option>
+                <option value="19:00 – 22:00">19:00 – 22:00</option>
+              </select>
+            </div>
+            <div class="form-field">
+              <label for="guests">Number of guests</label>
+              <select id="guests" th:field="*{guests}">
+                <option value="1–2 guests">1–2 guests</option>
+                <option value="3–4 guests">3–4 guests</option>
+                <option value="5–6 guests">5–6 guests</option>
+                <option value="7–10 guests">7–10 guests</option>
+                <option value="More than 10">More than 10</option>
+              </select>
+            </div>
+            <div class="form-field">
+              <label for="email">Email</label>
+              <input id="email" th:field="*{email}" type="email" autocomplete="email" placeholder="you@example.com">
+            </div>
+            <div class="form-field full">
+              <label for="message">Additional requests</label>
+              <textarea id="message" th:field="*{message}" placeholder="Special occasion, dietary requirements, or other notes..."></textarea>
+            </div>
+            <div class="form-field full">
+              <button class="button-gold" type="submit">Send reservation request</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </section>
+  <section class="section" style="background:var(--cream);padding-top:55px;padding-bottom:55px">
+    <div class="container section-heading" style="margin-bottom:0">
+      <span class="eyebrow">Find us</span>
+      <h2>In the heart of Da Nang</h2>
+      <p>Replace this section with a Google Maps embed once the exact restaurant address is available.</p>
+    </div>
+  </section>
+</main>
+
+<footer th:replace="~{fragments/footer :: footer}"></footer>
+
+</body>
+</html>
