@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title th:text="${pageTitle}">Quản Lý Kho Nguyên Liệu | GoD Admin</title>
+  <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body class="admin-body">
+
+<div class="admin-layout">
+  <aside th:replace="~{admin/fragments/sidebar :: sidebar(${activeAdminPage})}"></aside>
+
+  <div class="admin-main">
+    <header class="admin-topbar">
+      <h1>Quản Lý Kho Nguyên Vật Liệu</h1>
+      <button onclick="document.getElementById('addIngModal').style.display='block'" class="btn-gold">
+        + Thêm Nguyên Liệu Mới
+      </button>
+    </header>
+
+    <div class="admin-content">
+
+      <div th:if="${successMessage}" style="background: #edf7ed; color: #1e4620; padding: 14px 18px; border-radius: 4px; margin-bottom: 25px; border: 1px solid #c2e2c4;">
+        <span th:text="${successMessage}"></span>
+      </div>
+      <div th:if="${errorMessage}" style="background: #fdf2f2; color: #9b2c2c; padding: 14px 18px; border-radius: 4px; margin-bottom: 25px; border: 1px solid #fed7d7;">
+        <span th:text="${errorMessage}"></span>
+      </div>
+
+      <!-- Cảnh báo nếu có nguyên liệu sắp hết -->
+      <div th:if="${lowStockCount > 0}" style="background: #fff3cd; color: #856404; padding: 14px 18px; border-radius: 4px; margin-bottom: 25px; border: 1px solid #ffeeba; display: flex; align-items: center; gap: 10px;">
+        <span style="font-size: 20px;">⚠️</span>
+        <span>Có <strong th:text="${lowStockCount}">1</strong> nguyên liệu đang ở mức tồn kho tối thiểu hoặc sắp hết! Vui lòng lập phiếu nhập thêm từ nhà cung cấp.</span>
+      </div>
+
+      <div class="admin-card">
+        <div class="admin-card-header">
+          <h2>Danh Sách Nguyên Vật Liệu Tồn Kho</h2>
+          <span style="font-size: 13px; color: var(--admin-text-muted);" th:text="'Tổng số: ' + ${ingredients.size()} + ' nguyên liệu'"></span>
+        </div>
+
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Mã NL</th>
+              <th>Tên nguyên liệu</th>
+              <th>Đơn vị tính</th>
+              <th>Tồn kho thực tế</th>
+              <th>Ngưỡng tối thiểu</th>
+              <th>Giá vốn ước tính</th>
+              <th>Tình trạng tồn</th>
+              <th style="text-align: right;">Cập nhật tồn kho</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr th:each="ing : ${ingredients}">
+              <td><strong th:text="${ing.code}" style="font-family: monospace; color: var(--admin-gold);">ING-001</strong></td>
+              <td><strong th:text="${ing.name}">Thịt bò Wagyu</strong></td>
+              <td th:text="${ing.unit}">kg</td>
+              <td style="font-weight: bold; font-size: 15px;" th:text="${ing.stockQuantity}">25.5</td>
+              <td style="color: var(--admin-text-muted);" th:text="${ing.minStockLevel}">5.0</td>
+              <td style="font-family: Georgia, serif;" th:text="${#numbers.formatDecimal(ing.costPrice, 0, 'COMMA', 0, 'POINT')} + ' đ'">450,000 đ</td>
+              <td>
+                <span class="badge-status" 
+                      th:classappend="${ing.lowStock ? 'status-cancelled' : 'status-completed'}"
+                      th:text="${ing.lowStock ? '⚠️ Sắp hết hàng' : '✓ Đủ tồn kho'}">Đủ tồn kho</span>
+              </td>
+              <td style="text-align: right;">
+                <form th:action="@{/admin/inventory/update}" method="post" style="display: inline-flex; gap: 6px; align-items: center;">
+                  <input type="hidden" name="id" th:value="${ing.id}">
+                  <input type="number" step="0.1" name="stockQuantity" th:value="${ing.stockQuantity}" style="width: 70px; padding: 4px; border: 1px solid #ccc; border-radius: 3px; font-size: 12px; text-align: center;">
+                  <button type="submit" class="btn-sm btn-gold" style="font-size: 11px;">Lưu</button>
+                </form>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Modal Thêm Nguyên Liệu Mới -->
+<div id="addIngModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; place-items: center; padding: 20px;">
+  <div style="background: white; width: min(480px, 100%); margin: 60px auto; padding: 28px; border-radius: 6px; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+      <h3 style="margin: 0; font-size: 18px;">Thêm Nguyên Liệu Vào Kho</h3>
+      <button onclick="document.getElementById('addIngModal').style.display='none'" style="background: none; border: none; font-size: 20px; cursor: pointer;">✕</button>
+    </div>
+
+    <form th:action="@{/admin/inventory/add}" method="post">
+      <div style="margin-bottom: 14px;">
+        <label style="display: block; font-size: 11px; text-transform: uppercase; font-weight: bold; margin-bottom: 5px;">Mã nguyên liệu *</label>
+        <input name="code" type="text" required placeholder="Ví dụ: ING-SALMON" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+      </div>
+
+      <div style="margin-bottom: 14px;">
+        <label style="display: block; font-size: 11px; text-transform: uppercase; font-weight: bold; margin-bottom: 5px;">Tên nguyên liệu *</label>
+        <input name="name" type="text" required placeholder="Cá hồi Nauy tươi" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
+        <div>
+          <label style="display: block; font-size: 11px; text-transform: uppercase; font-weight: bold; margin-bottom: 5px;">Đơn vị tính *</label>
+          <input name="unit" type="text" required placeholder="kg, lít, quả..." style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+        </div>
+        <div>
+          <label style="display: block; font-size: 11px; text-transform: uppercase; font-weight: bold; margin-bottom: 5px;">Số lượng nhập ban đầu *</label>
+          <input name="stockQuantity" type="number" step="0.1" value="10.0" required style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 22px;">
+        <div>
+          <label style="display: block; font-size: 11px; text-transform: uppercase; font-weight: bold; margin-bottom: 5px;">Ngưỡng tồn tối thiểu *</label>
+          <input name="minStockLevel" type="number" step="0.1" value="3.0" required style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+        </div>
+        <div>
+          <label style="display: block; font-size: 11px; text-transform: uppercase; font-weight: bold; margin-bottom: 5px;">Giá vốn ước tính (VND) *</label>
+          <input name="costPrice" type="number" value="350000" required style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+        </div>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 10px;">
+        <button type="button" onclick="document.getElementById('addIngModal').style.display='none'" class="btn-sm" style="padding: 10px 16px;">Hủy</button>
+        <button type="submit" class="btn-gold">Lưu Nguyên Liệu</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+</body>
+</html>

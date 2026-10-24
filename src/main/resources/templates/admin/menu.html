@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title th:text="${pageTitle}">Quản Lý Thực Đơn | GoD Admin</title>
+  <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body class="admin-body">
+
+<div class="admin-layout">
+  <aside th:replace="~{admin/fragments/sidebar :: sidebar(${activeAdminPage})}"></aside>
+
+  <div class="admin-main">
+    <header class="admin-topbar">
+      <h1>Quản Lý Thực Đơn &amp; Món Ăn</h1>
+      <button onclick="document.getElementById('addModal').style.display='block'" class="btn-gold">
+        + Thêm Món Ăn Mới
+      </button>
+    </header>
+
+    <div class="admin-content">
+
+      <!-- Thông báo flash -->
+      <div th:if="${successMessage}" style="background: #edf7ed; color: #1e4620; padding: 14px 18px; border-radius: 4px; margin-bottom: 25px; border: 1px solid #c2e2c4;">
+        <span th:text="${successMessage}"></span>
+      </div>
+
+      <div class="admin-card">
+        <div class="admin-card-header">
+          <h2>Danh Sách 12 Món Ăn Trong Thực Đơn</h2>
+          <span style="font-size: 13px; color: var(--admin-text-muted);" th:text="'Tổng số: ' + ${menuItems.size()} + ' món'"></span>
+        </div>
+
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Hình ảnh</th>
+              <th>Tên món ăn</th>
+              <th>Danh mục</th>
+              <th>Giá bán</th>
+              <th>Tình trạng bếp</th>
+              <th>Nổi bật</th>
+              <th style="text-align: right;">Hành động</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr th:each="item : ${menuItems}">
+              <td>
+                <img th:if="${item.imageUrl != null}" 
+                     th:src="${item.imageUrl}" 
+                     style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px; border: 1px solid var(--admin-line);">
+              </td>
+              <td>
+                <strong th:text="${item.name}" style="font-size: 14px; display: block;">Món ăn</strong>
+                <small th:text="${item.description}" style="color: var(--admin-text-muted); display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; max-width: 280px;"></small>
+              </td>
+              <td th:text="${item.category}">Khai vị</td>
+              <td style="font-weight: bold; font-family: Georgia, serif; font-size: 15px;" 
+                  th:text="${#numbers.formatDecimal(item.priceValue, 0, 'COMMA', 0, 'POINT')} + ' đ'">95,000 đ</td>
+              <td>
+                <!-- Toggle Còn món / Hết món -->
+                <form th:action="@{/admin/menu/toggle-available}" method="post" style="display: inline;">
+                  <input type="hidden" name="id" th:value="${item.id}">
+                  <button type="submit" class="btn-sm" 
+                          th:classappend="${item.available ? 'btn-success' : 'btn-danger'}"
+                          th:text="${item.available ? '✓ Còn món' : '✕ Hết món'}"
+                          title="Bấm để đổi trạng thái"></button>
+                </form>
+              </td>
+              <td>
+                <!-- Toggle Món nổi bật -->
+                <form th:action="@{/admin/menu/toggle-featured}" method="post" style="display: inline;">
+                  <input type="hidden" name="id" th:value="${item.id}">
+                  <button type="submit" class="btn-sm" 
+                          th:style="${item.featured ? 'background:#fff4e5; color:#b88230; font-weight:bold;' : 'color:#999;'}"
+                          th:text="${item.featured ? '★ Nổi bật' : '☆ Thường'}"
+                          title="Bấm để bật/tắt nổi bật"></button>
+                </form>
+              </td>
+              <td style="text-align: right;">
+                <form th:action="@{/admin/menu/delete}" method="post" style="display: inline;" 
+                      onsubmit="return confirm('Bạn có chắc chắn muốn xóa món này?');">
+                  <input type="hidden" name="id" th:value="${item.id}">
+                  <button type="submit" class="btn-sm btn-danger">Xóa</button>
+                </form>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Modal Thêm Món Ăn Mới -->
+<div id="addModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; place-items: center; padding: 20px;">
+  <div style="background: white; width: min(520px, 100%); margin: 60px auto; padding: 30px; border-radius: 6px; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+      <h3 style="margin: 0; font-size: 18px;">Thêm Món Ăn Mới Vào Thực Đơn</h3>
+      <button onclick="document.getElementById('addModal').style.display='none'" style="background: none; border: none; font-size: 20px; cursor: pointer;">✕</button>
+    </div>
+
+    <form th:action="@{/admin/menu/add}" method="post">
+      <div style="margin-bottom: 14px;">
+        <label style="display: block; font-size: 11px; text-transform: uppercase; font-weight: bold; margin-bottom: 5px;">Tên món ăn *</label>
+        <input name="name" type="text" required placeholder="Ví dụ: Bò Nướng Lá Lốt" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+      </div>
+
+      <div style="margin-bottom: 14px;">
+        <label style="display: block; font-size: 11px; text-transform: uppercase; font-weight: bold; margin-bottom: 5px;">Danh mục *</label>
+        <select name="category" required style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+          <option value="Starters · Khai vị">Starters · Khai vị</option>
+          <option value="Main courses · Món chính">Main courses · Món chính</option>
+          <option value="Desserts · Tráng miệng">Desserts · Tráng miệng</option>
+          <option value="Drinks · Đồ uống">Drinks · Đồ uống</option>
+        </select>
+      </div>
+
+      <div style="margin-bottom: 14px;">
+        <label style="display: block; font-size: 11px; text-transform: uppercase; font-weight: bold; margin-bottom: 5px;">Giá bán niêm yết (VND) *</label>
+        <input name="priceValue" type="number" required placeholder="120000" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+      </div>
+
+      <div style="margin-bottom: 14px;">
+        <label style="display: block; font-size: 11px; text-transform: uppercase; font-weight: bold; margin-bottom: 5px;">Đường dẫn hình ảnh (URL)</label>
+        <input name="imageUrl" type="text" placeholder="/images/dishes/slow-braised-beef.jpg hoặc link online" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+      </div>
+
+      <div style="margin-bottom: 14px;">
+        <label style="display: block; font-size: 11px; text-transform: uppercase; font-weight: bold; margin-bottom: 5px;">Mô tả thành phần, hương vị *</label>
+        <textarea name="description" required rows="3" placeholder="Mô tả món ăn hấp dẫn..." style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;"></textarea>
+      </div>
+
+      <div style="margin-bottom: 22px;">
+        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+          <input type="checkbox" name="featured" value="true">
+          <span>Đặt làm món ăn Tiêu biểu / Nổi bật trên trang chủ</span>
+        </label>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 10px;">
+        <button type="button" onclick="document.getElementById('addModal').style.display='none'" class="btn-sm" style="padding: 10px 16px;">Hủy</button>
+        <button type="submit" class="btn-gold">Lưu Món Mới</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title th:text="${pageTitle}">Bảng Điều Khiển | GoD Admin</title>
+  <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body class="admin-body">
+
+<div class="admin-layout">
+  <!-- Sidebar -->
+  <aside th:replace="~{admin/fragments/sidebar :: sidebar(${activeAdminPage})}"></aside>
+
+  <!-- Main Content -->
+  <div class="admin-main">
+    <header class="admin-topbar">
+      <h1>Bảng Điều Khiển Tổng Quan</h1>
+      <div>
+        <span style="font-size: 13px; color: var(--admin-text-muted);">Hôm nay: <strong th:text="${#temporals.format(#temporals.createNow(), 'dd/MM/yyyy')}">23/10/2026</strong></span>
+      </div>
+    </header>
+
+    <div class="admin-content">
+      
+      <!-- Thông báo flash -->
+      <div th:if="${successMessage}" style="background: #edf7ed; color: #1e4620; padding: 14px 18px; border-radius: 4px; margin-bottom: 25px; border: 1px solid #c2e2c4;">
+        <span th:text="${successMessage}"></span>
+      </div>
+
+      <!-- KPI Grid -->
+      <div class="admin-kpi-grid">
+        <div class="admin-kpi-card">
+          <span class="admin-kpi-title">Tổng Doanh Thu</span>
+          <div class="admin-kpi-val" style="color: var(--admin-gold);" 
+               th:text="${#numbers.formatDecimal(totalRevenue, 0, 'COMMA', 0, 'POINT')} + ' đ'">0 đ</div>
+          <small style="color: var(--admin-text-muted);">Từ các đơn hoàn thành</small>
+        </div>
+
+        <div class="admin-kpi-card">
+          <span class="admin-kpi-title">Đơn Chờ Xử Lý</span>
+          <div class="admin-kpi-val" style="color: #b06000;" th:text="${pendingOrderCount}">0</div>
+          <a th:href="@{/admin/orders}" style="font-size: 12px; color: var(--admin-gold); text-decoration: underline;">Xem đơn hàng →</a>
+        </div>
+
+        <div class="admin-kpi-card">
+          <span class="admin-kpi-title">Đặt Bàn Chờ Duyệt</span>
+          <div class="admin-kpi-val" style="color: #1a73e8;" th:text="${pendingReservationCount}">0</div>
+          <a th:href="@{/admin/reservations}" style="font-size: 12px; color: var(--admin-gold); text-decoration: underline;">Xem đặt bàn →</a>
+        </div>
+
+        <div class="admin-kpi-card">
+          <span class="admin-kpi-title">Cảnh Báo Tồn Kho</span>
+          <div class="admin-kpi-val" style="color: #c5221f;" th:text="${lowStockCount}">0</div>
+          <a th:href="@{/admin/inventory}" style="font-size: 12px; color: #c5221f; text-decoration: underline;">Kiểm tra kho ngay →</a>
+        </div>
+      </div>
+
+      <!-- 2 Bảng Đơn Hàng Mới & Đặt Bàn Mới -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+        
+        <!-- Đơn đặt món mới nhất -->
+        <div class="admin-card">
+          <div class="admin-card-header">
+            <h2>🛒 Đơn Đặt Món Gần Đây</h2>
+            <a th:href="@{/admin/orders}" class="btn-sm">Xem tất cả</a>
+          </div>
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Mã đơn</th>
+                <th>Khách hàng</th>
+                <th>Tổng tiền</th>
+                <th>Trạng thái</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr th:each="order : ${recentOrders}">
+                <td><strong th:text="${order.orderCode}" style="font-family: monospace;">ORD-001</strong></td>
+                <td>
+                  <span th:text="${order.customerName}">Nguyễn Văn A</span>
+                  <small style="display: block; color: var(--admin-text-muted);" th:text="${order.customerPhone}"></small>
+                </td>
+                <td style="font-weight: bold; font-family: Georgia, serif;" 
+                    th:text="${#numbers.formatDecimal(order.totalAmount, 0, 'COMMA', 0, 'POINT')} + ' đ'">480k</td>
+                <td>
+                  <span class="badge-status" 
+                        th:classappend="${order.status == 'COMPLETED' ? 'status-completed' : (order.status == 'SERVING' ? 'status-serving' : (order.status == 'CANCELLED' ? 'status-cancelled' : 'status-pending'))}"
+                        th:text="${order.statusDisplayName}">Chờ xử lý</span>
+                </td>
+              </tr>
+              <tr th:if="${recentOrders == null or #lists.isEmpty(recentOrders)}">
+                <td colspan="4" style="text-align: center; color: var(--admin-text-muted); padding: 30px;">Chưa có đơn hàng nào</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Đặt bàn online mới nhất -->
+        <div class="admin-card">
+          <div class="admin-card-header">
+            <h2>📅 Yêu Cầu Đặt Bàn Mới</h2>
+            <a th:href="@{/admin/reservations}" class="btn-sm">Xem tất cả</a>
+          </div>
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Khách đặt</th>
+                <th>Ngày &amp; Giờ</th>
+                <th>Số khách</th>
+                <th>Trạng thái</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr th:each="res : ${recentReservations}">
+                <td>
+                  <strong th:text="${res.customerName}">Lê Thị Mai</strong>
+                  <small style="display: block; color: var(--admin-text-muted);" th:text="${res.phone}"></small>
+                </td>
+                <td>
+                  <span th:text="${res.date}">2026-10-24</span>
+                  <small style="display: block; color: var(--admin-text-muted);" th:text="${res.time}"></small>
+                </td>
+                <td th:text="${res.guests}">3-4 khách</td>
+                <td>
+                  <span class="badge-status"
+                        th:classappend="${res.status == 'CONFIRMED' ? 'status-completed' : (res.status == 'CANCELLED' ? 'status-cancelled' : 'status-pending')}"
+                        th:text="${res.statusDisplayName}">Chờ duyệt</span>
+                </td>
+              </tr>
+              <tr th:if="${recentReservations == null or #lists.isEmpty(recentReservations)}">
+                <td colspan="4" style="text-align: center; color: var(--admin-text-muted); padding: 30px;">Chưa có yêu cầu đặt bàn nào</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

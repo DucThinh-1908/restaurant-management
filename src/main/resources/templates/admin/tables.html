@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title th:text="${pageTitle}">Quản Lý Bàn Ăn | GoD Admin</title>
+  <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body class="admin-body">
+
+<div class="admin-layout">
+  <aside th:replace="~{admin/fragments/sidebar :: sidebar(${activeAdminPage})}"></aside>
+
+  <div class="admin-main">
+    <header class="admin-topbar">
+      <h1>Sơ Đồ &amp; Quản Lý Bàn Ăn</h1>
+      <button onclick="document.getElementById('addTableModal').style.display='block'" class="btn-gold">
+        + Thêm Bàn Mới
+      </button>
+    </header>
+
+    <div class="admin-content">
+
+      <div th:if="${successMessage}" style="background: #edf7ed; color: #1e4620; padding: 14px 18px; border-radius: 4px; margin-bottom: 25px; border: 1px solid #c2e2c4;">
+        <span th:text="${successMessage}"></span>
+      </div>
+      <div th:if="${errorMessage}" style="background: #fdf2f2; color: #9b2c2c; padding: 14px 18px; border-radius: 4px; margin-bottom: 25px; border: 1px solid #fed7d7;">
+        <span th:text="${errorMessage}"></span>
+      </div>
+
+      <!-- Sơ đồ trực quan dạng lưới các bàn -->
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 20px; margin-bottom: 35px;">
+        <div th:each="table : ${tables}" 
+             style="background: white; border: 1px solid var(--admin-line); border-radius: 6px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); position: relative;">
+          
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <strong style="font-size: 18px; font-family: Georgia, serif;" th:text="${table.tableNumber}">T1-01</strong>
+            <span class="badge-status" 
+                  th:classappend="${table.status == 'AVAILABLE' ? 'status-available' : (table.status == 'OCCUPIED' ? 'status-occupied' : (table.status == 'RESERVED' ? 'status-reserved' : 'status-cancelled'))}"
+                  th:text="${table.statusDisplayName}">Trống</span>
+          </div>
+
+          <div style="font-size: 13px; color: var(--admin-text-muted); margin-bottom: 16px;">
+            <div>Khu vực: <strong style="color: var(--admin-text);" th:text="${table.area}">Tầng 1</strong></div>
+            <div>Sức chứa: <strong style="color: var(--admin-text);" th:text="${table.capacity} + ' người'">4 người</strong></div>
+          </div>
+
+          <!-- Nhanh đổi trạng thái bàn -->
+          <form th:action="@{/admin/tables/update-status}" method="post" style="display: flex; gap: 6px;">
+            <input type="hidden" name="id" th:value="${table.id}">
+            <select name="status" onchange="this.form.submit()" style="width: 100%; font-size: 12px; padding: 6px; border: 1px solid #ddd; border-radius: 4px; background: #faf9f6;">
+              <option value="AVAILABLE" th:selected="${table.status == 'AVAILABLE'}">Bàn trống</option>
+              <option value="OCCUPIED" th:selected="${table.status == 'OCCUPIED'}">Đang có khách</option>
+              <option value="RESERVED" th:selected="${table.status == 'RESERVED'}">Đã đặt trước</option>
+              <option value="MAINTENANCE" th:selected="${table.status == 'MAINTENANCE'}">Đang bảo trì</option>
+            </select>
+          </form>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Modal Thêm Bàn Mới -->
+<div id="addTableModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; place-items: center; padding: 20px;">
+  <div style="background: white; width: min(440px, 100%); margin: 80px auto; padding: 28px; border-radius: 6px; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+      <h3 style="margin: 0; font-size: 18px;">Thêm Bàn Ăn Mới</h3>
+      <button onclick="document.getElementById('addTableModal').style.display='none'" style="background: none; border: none; font-size: 20px; cursor: pointer;">✕</button>
+    </div>
+
+    <form th:action="@{/admin/tables/add}" method="post">
+      <div style="margin-bottom: 14px;">
+        <label style="display: block; font-size: 11px; text-transform: uppercase; font-weight: bold; margin-bottom: 5px;">Mã số bàn *</label>
+        <input name="tableNumber" type="text" required placeholder="Ví dụ: T1-05 hoặc VIP-02" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+      </div>
+
+      <div style="margin-bottom: 14px;">
+        <label style="display: block; font-size: 11px; text-transform: uppercase; font-weight: bold; margin-bottom: 5px;">Khu vực nhà hàng *</label>
+        <select name="area" required style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+          <option value="Tầng 1 - Sảnh chính">Tầng 1 - Sảnh chính</option>
+          <option value="Tầng 2 - Ban công">Tầng 2 - Ban công</option>
+          <option value="Sân vườn ngoài trời">Sân vườn ngoài trời</option>
+          <option value="Phòng VIP Hoàng Gia">Phòng VIP Hoàng Gia</option>
+        </select>
+      </div>
+
+      <div style="margin-bottom: 22px;">
+        <label style="display: block; font-size: 11px; text-transform: uppercase; font-weight: bold; margin-bottom: 5px;">Sức chứa (số ghế tối đa) *</label>
+        <input name="capacity" type="number" min="1" max="50" value="4" required style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 10px;">
+        <button type="button" onclick="document.getElementById('addTableModal').style.display='none'" class="btn-sm" style="padding: 10px 16px;">Hủy</button>
+        <button type="submit" class="btn-gold">Tạo Bàn Mới</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+</body>
+</html>

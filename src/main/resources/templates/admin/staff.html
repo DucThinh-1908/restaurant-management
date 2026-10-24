@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title th:text="${pageTitle}">Quản Lý Nhân Sự | GoD Admin</title>
+  <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body class="admin-body">
+
+<div class="admin-layout">
+  <aside th:replace="~{admin/fragments/sidebar :: sidebar(${activeAdminPage})}"></aside>
+
+  <div class="admin-main">
+    <header class="admin-topbar">
+      <h1>Quản Lý Nhân Sự &amp; 7 Vai Trò Nội Bộ</h1>
+      <button onclick="document.getElementById('addStaffModal').style.display='block'" class="btn-gold">
+        + Thêm Nhân Viên Mới
+      </button>
+    </header>
+
+    <div class="admin-content">
+
+      <div th:if="${successMessage}" style="background: #edf7ed; color: #1e4620; padding: 14px 18px; border-radius: 4px; margin-bottom: 25px; border: 1px solid #c2e2c4;">
+        <span th:text="${successMessage}"></span>
+      </div>
+      <div th:if="${errorMessage}" style="background: #fdf2f2; color: #9b2c2c; padding: 14px 18px; border-radius: 4px; margin-bottom: 25px; border: 1px solid #fed7d7;">
+        <span th:text="${errorMessage}"></span>
+      </div>
+
+      <div class="admin-card">
+        <div class="admin-card-header">
+          <h2>Danh Sách Tài Khoản Nhân Viên Nhà Hàng</h2>
+          <span style="font-size: 13px; color: var(--admin-text-muted);" th:text="'Tổng số: ' + ${staffList.size()} + ' nhân viên'"></span>
+        </div>
+
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Họ và tên</th>
+              <th>Tên đăng nhập</th>
+              <th>Vai trò (Role)</th>
+              <th>Số điện thoại</th>
+              <th>Email</th>
+              <th>Trạng thái</th>
+              <th style="text-align: right;">Khóa / Mở</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr th:each="st : ${staffList}">
+              <td><strong th:text="'#' + ${st.id}">#1</strong></td>
+              <td><strong th:text="${st.fullName}">Quản Trị Viên</strong></td>
+              <td><code th:text="${st.username}">admin</code></td>
+              <td>
+                <span class="badge-status status-occupied" style="font-weight: 600;" th:text="${st.roleName}">ADMIN</span>
+              </td>
+              <td th:text="${st.phone}">0901000001</td>
+              <td th:text="${st.email}">admin@godrestaurant.vn</td>
+              <td>
+                <span class="badge-status" 
+                      th:classappend="${st.status == 'ACTIVE' ? 'status-completed' : 'status-cancelled'}"
+                      th:text="${st.status == 'ACTIVE' ? '✓ Đang hoạt động' : '✕ Bị tạm khóa'}">Hoạt động</span>
+              </td>
+              <td style="text-align: right;">
+                <form th:if="${st.id != 1}" th:action="@{/admin/staff/toggle}" method="post" style="display: inline;">
+                  <input type="hidden" name="id" th:value="${st.id}">
+                  <button type="submit" class="btn-sm" 
+                          th:classappend="${st.status == 'ACTIVE' ? 'btn-danger' : 'btn-success'}"
+                          th:text="${st.status == 'ACTIVE' ? 'Khóa tài khoản' : 'Mở khóa'}"
+                          onclick="return confirm('Bạn có chắc muốn đổi trạng thái tài khoản này?');"></button>
+                </form>
+                <span th:if="${st.id == 1}" style="font-size: 11px; color: var(--admin-text-muted); font-style: italic;">Quản trị gốc</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Modal Thêm Nhân Viên Mới -->
+<div id="addStaffModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; place-items: center; padding: 20px;">
+  <div style="background: white; width: min(480px, 100%); margin: 60px auto; padding: 28px; border-radius: 6px; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+      <h3 style="margin: 0; font-size: 18px;">Thêm Nhân Viên Nội Bộ Mới</h3>
+      <button onclick="document.getElementById('addStaffModal').style.display='none'" style="background: none; border: none; font-size: 20px; cursor: pointer;">✕</button>
+    </div>
+
+    <form th:action="@{/admin/staff/add}" method="post">
+      <div style="margin-bottom: 14px;">
+        <label style="display: block; font-size: 11px; text-transform: uppercase; font-weight: bold; margin-bottom: 5px;">Họ và tên *</label>
+        <input name="fullName" type="text" required placeholder="Nguyễn Văn B" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
+        <div>
+          <label style="display: block; font-size: 11px; text-transform: uppercase; font-weight: bold; margin-bottom: 5px;">Tên đăng nhập *</label>
+          <input name="username" type="text" required placeholder="waiter02" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+        </div>
+        <div>
+          <label style="display: block; font-size: 11px; text-transform: uppercase; font-weight: bold; margin-bottom: 5px;">Mật khẩu *</label>
+          <input name="password" type="password" required value="123456" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
+        <div>
+          <label style="display: block; font-size: 11px; text-transform: uppercase; font-weight: bold; margin-bottom: 5px;">Số điện thoại *</label>
+          <input name="phone" type="tel" required placeholder="0901234567" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+        </div>
+        <div>
+          <label style="display: block; font-size: 11px; text-transform: uppercase; font-weight: bold; margin-bottom: 5px;">Vai trò (Role) *</label>
+          <select name="roleName" required style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+            <option value="ADMIN">ADMIN (Quản trị viên)</option>
+            <option value="MANAGER">MANAGER (Quản lý)</option>
+            <option value="RECEPTIONIST">RECEPTIONIST (Lễ tân)</option>
+            <option value="WAITER" selected>WAITER (Phục vụ bàn)</option>
+            <option value="CHEF">CHEF (Đầu bếp)</option>
+            <option value="CASHIER">CASHIER (Thu ngân)</option>
+            <option value="STOREKEEPER">STOREKEEPER (Thủ kho)</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="margin-bottom: 22px;">
+        <label style="display: block; font-size: 11px; text-transform: uppercase; font-weight: bold; margin-bottom: 5px;">Địa chỉ Email *</label>
+        <input name="email" type="email" required placeholder="nhanvien@godrestaurant.vn" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 10px;">
+        <button type="button" onclick="document.getElementById('addStaffModal').style.display='none'" class="btn-sm" style="padding: 10px 16px;">Hủy</button>
+        <button type="submit" class="btn-gold">Lưu Nhân Viên</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+</body>
+</html>

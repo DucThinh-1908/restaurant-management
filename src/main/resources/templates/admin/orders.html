@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title th:text="${pageTitle}">Quản Lý Đơn Hàng | GoD Admin</title>
+  <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body class="admin-body">
+
+<div class="admin-layout">
+  <aside th:replace="~{admin/fragments/sidebar :: sidebar(${activeAdminPage})}"></aside>
+
+  <div class="admin-main">
+    <header class="admin-topbar">
+      <h1>Quản Lý Đơn Hàng &amp; Gọi Món</h1>
+    </header>
+
+    <div class="admin-content">
+
+      <div th:if="${successMessage}" style="background: #edf7ed; color: #1e4620; padding: 14px 18px; border-radius: 4px; margin-bottom: 25px; border: 1px solid #c2e2c4;">
+        <span th:text="${successMessage}"></span>
+      </div>
+
+      <div class="admin-card">
+        <div class="admin-card-header">
+          <h2>Danh Sách Đơn Đặt Món</h2>
+          <span style="font-size: 13px; color: var(--admin-text-muted);" th:text="'Tổng số: ' + ${orders.size()} + ' đơn'"></span>
+        </div>
+
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Mã đơn</th>
+              <th>Thời gian</th>
+              <th>Khách hàng &amp; Giao nhận</th>
+              <th>Chi tiết món ăn</th>
+              <th>Tổng tiền</th>
+              <th>Trạng thái</th>
+              <th style="text-align: right;">Cập nhật tiến độ</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr th:each="order : ${orders}">
+              <td>
+                <strong th:text="${order.orderCode}" style="font-family: monospace; font-size: 14px; color: var(--admin-gold);">ORD-001</strong>
+                <span style="display: block; font-size: 11px; text-transform: uppercase; color: var(--admin-text-muted); font-weight: bold;" th:text="${order.orderTypeDisplayName}"></span>
+              </td>
+              <td>
+                <span th:text="${order.formattedCreatedAt}">12:30</span>
+              </td>
+              <td>
+                <strong th:text="${order.customerName}">Nguyễn Hoàng Nam</strong>
+                <small style="display: block; color: var(--admin-text-muted);" th:text="'SĐT: ' + ${order.customerPhone}"></small>
+                <small th:if="${order.deliveryAddress != null and not #strings.isEmpty(order.deliveryAddress)}" 
+                       style="display: block; color: #555; max-width: 220px;" th:text="'Đ/c: ' + ${order.deliveryAddress}"></small>
+                <small th:if="${order.note != null and not #strings.isEmpty(order.note)}" 
+                       style="display: block; color: var(--admin-gold-hover); font-style: italic;" th:text="'Ghi chú: ' + ${order.note}"></small>
+              </td>
+              <td>
+                <ul style="margin: 0; padding-left: 18px; font-size: 12px;">
+                  <li th:each="item : ${order.items}">
+                    <span th:text="${item.itemName}"></span>
+                    <strong th:text="' x ' + ${item.quantity}"></strong>
+                  </li>
+                </ul>
+              </td>
+              <td>
+                <strong style="font-family: Georgia, serif; font-size: 16px;" 
+                        th:text="${#numbers.formatDecimal(order.totalAmount, 0, 'COMMA', 0, 'POINT')} + ' đ'">480k</strong>
+                <small style="display: block; color: var(--admin-text-muted);" 
+                       th:text="${order.paymentMethod == 'BANK_TRANSFER' ? 'Chuyển khoản QR' : 'Tiền mặt COD'}"></small>
+              </td>
+              <td>
+                <span class="badge-status" 
+                      th:classappend="${order.status == 'COMPLETED' ? 'status-completed' : (order.status == 'SERVING' ? 'status-serving' : (order.status == 'CANCELLED' ? 'status-cancelled' : 'status-pending'))}"
+                      th:text="${order.statusDisplayName}">Chờ xử lý</span>
+              </td>
+              <td style="text-align: right;">
+                <div style="display: flex; justify-content: flex-end; gap: 6px;">
+                  <!-- Nút Bếp nhận nấu / Đang phục vụ -->
+                  <form th:if="${order.status == 'PENDING'}" th:action="@{/admin/orders/update-status}" method="post">
+                    <input type="hidden" name="id" th:value="${order.id}">
+                    <input type="hidden" name="status" value="SERVING">
+                    <button type="submit" class="btn-sm btn-gold">👨‍🍳 Bếp nhận nấu</button>
+                  </form>
+
+                  <!-- Nút Hoàn thành -->
+                  <form th:if="${order.status == 'SERVING'}" th:action="@{/admin/orders/update-status}" method="post">
+                    <input type="hidden" name="id" th:value="${order.id}">
+                    <input type="hidden" name="status" value="COMPLETED">
+                    <button type="submit" class="btn-sm btn-success">✓ Hoàn thành đơn</button>
+                  </form>
+
+                  <!-- Nút Hủy đơn -->
+                  <form th:if="${order.status != 'CANCELLED' and order.status != 'COMPLETED'}" th:action="@{/admin/orders/update-status}" method="post">
+                    <input type="hidden" name="id" th:value="${order.id}">
+                    <input type="hidden" name="status" value="CANCELLED">
+                    <button type="submit" class="btn-sm btn-danger" onclick="return confirm('Bạn có chắc muốn hủy đơn này?');">Hủy</button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+            <tr th:if="${orders == null or #lists.isEmpty(orders)}">
+              <td colspan="7" style="text-align: center; color: var(--admin-text-muted); padding: 40px;">Chưa có đơn đặt món nào</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
