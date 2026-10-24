@@ -8,12 +8,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 @Service
 public class MenuService {
 
     private final List<MenuItem> menuItems = new ArrayList<>();
+    private final AtomicLong idGenerator = new AtomicLong(13);
 
     public MenuService() {
         // Starters · Khai vị
@@ -68,17 +70,53 @@ public class MenuService {
         menuItems.add(item12);
     }
 
-    public List<MenuItem> getAllMenuItems() {
-        return menuItems;
+    public synchronized List<MenuItem> getAllMenuItems() {
+        return new ArrayList<>(menuItems);
     }
 
-    public Optional<MenuItem> findById(Long id) {
+    public synchronized Optional<MenuItem> findById(Long id) {
         if (id == null) return Optional.empty();
         return menuItems.stream().filter(m -> m.getId().equals(id)).findFirst();
     }
 
-    public Map<String, List<MenuItem>> getMenuItemsGroupedByCategory() {
+    public synchronized Map<String, List<MenuItem>> getMenuItemsGroupedByCategory() {
         return menuItems.stream()
                 .collect(Collectors.groupingBy(MenuItem::getCategory));
+    }
+
+    // --- PHƯƠNG THỨC DÀNH CHO ADMIN ---
+    public synchronized void addMenuItem(MenuItem item) {
+        item.setId(idGenerator.getAndIncrement());
+        if (item.getPrice() == null || item.getPrice().isBlank()) {
+            item.setPrice(item.getPriceValue() != null ? (item.getPriceValue().divide(new BigDecimal(1000)).intValue() + "k") : "0k");
+        }
+        menuItems.add(item);
+    }
+
+    public synchronized void updateMenuItem(MenuItem updated) {
+        findById(updated.getId()).ifPresent(m -> {
+            m.setName(updated.getName());
+            m.setCategory(updated.getCategory());
+            m.setDescription(updated.getDescription());
+            m.setPriceValue(updated.getPriceValue());
+            m.setPrice(updated.getPriceValue() != null ? (updated.getPriceValue().divide(new BigDecimal(1000)).intValue() + "k") : updated.getPrice());
+            if (updated.getImageUrl() != null && !updated.getImageUrl().isBlank()) {
+                m.setImageUrl(updated.getImageUrl());
+            }
+            m.setAvailable(updated.isAvailable());
+            m.setFeatured(updated.isFeatured());
+        });
+    }
+
+    public synchronized void deleteMenuItem(Long id) {
+        menuItems.removeIf(m -> m.getId().equals(id));
+    }
+
+    public synchronized void toggleAvailability(Long id) {
+        findById(id).ifPresent(m -> m.setAvailable(!m.isAvailable()));
+    }
+
+    public synchronized void toggleFeatured(Long id) {
+        findById(id).ifPresent(m -> m.setFeatured(!m.isFeatured()));
     }
 }
