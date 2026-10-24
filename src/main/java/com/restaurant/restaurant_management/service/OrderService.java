@@ -134,4 +134,24 @@ public class OrderService {
         if (id == null) return Optional.empty();
         return orders.stream().filter(o -> o.getId().equals(id)).findFirst();
     }
+
+    // --- PHƯƠNG THỨC QUẢN TRỊ ADMIN ---
+    public synchronized List<Order> getAllOrders() {
+        return new ArrayList<>(orders);
+    }
+
+    public synchronized void updateOrderStatus(Long orderId, String status) {
+        getOrderById(orderId).ifPresent(o -> o.setStatus(status));
+    }
+
+    public synchronized BigDecimal getTotalRevenue() {
+        return orders.stream()
+                .filter(o -> "COMPLETED".equalsIgnoreCase(o.getStatus()))
+                .map(Order::getTotalAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+    public synchronized long getPendingOrderCount() {
+        return orders.stream().filter(o -> "PENDING".equalsIgnoreCase(o.getStatus())).count();
+    }
 }
