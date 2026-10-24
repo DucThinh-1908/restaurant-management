@@ -1,8 +1,8 @@
 <!doctype html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/head :: head('Đăng nhập | GoD Fine Dining')}">
+<head th:replace="~{fragments/head :: head('Đăng nhập hệ thống | GoD Fine Dining')}">
   <meta charset="utf-8">
-  <title>Đăng nhập | GoD Fine Dining</title>
+  <title>Đăng nhập hệ thống | GoD Fine Dining</title>
   <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
@@ -10,17 +10,17 @@
 <header th:replace="~{fragments/header :: header('login')}"></header>
 
 <main>
-  <section class="section" style="padding-top: 60px; min-height: calc(100vh - 250px);">
-    <div class="container" style="max-width: 480px;">
-      <div class="form-card" style="box-shadow: 0 10px 30px rgba(0,0,0,0.05); border-radius: 4px;">
-        <span class="eyebrow" style="text-align: center;">Thành viên GoD Fine Dining</span>
-        <h2 style="text-align: center; margin-bottom: 25px;">Đăng Nhập</h2>
+  <section class="section" style="padding-top: 50px; min-height: calc(100vh - 250px);">
+    <div class="container" style="max-width: 540px;">
+      <div class="form-card" style="box-shadow: 0 10px 30px rgba(0,0,0,0.06); border-radius: 6px;">
+        <span class="eyebrow" style="text-align: center;">Cổng Đăng Nhập Hệ Thống</span>
+        <h2 style="text-align: center; margin-bottom: 22px;">Đăng Nhập</h2>
 
         <!-- Flash messages -->
-        <div th:if="${successMessage}" class="alert-box alert-success">
+        <div th:if="${successMessage}" class="alert-box alert-success" style="margin-bottom: 18px;">
           <span th:text="${successMessage}"></span>
         </div>
-        <div th:if="${errorMessage}" class="alert-box alert-error">
+        <div th:if="${errorMessage}" class="alert-box alert-error" style="margin-bottom: 18px;">
           <span th:text="${errorMessage}"></span>
         </div>
 
@@ -28,8 +28,8 @@
           <input type="hidden" name="redirect" th:value="${redirect}">
           
           <div class="form-field" style="margin-bottom: 16px;">
-            <label for="email">Địa chỉ Email *</label>
-            <input id="email" name="email" type="email" required placeholder="name@example.com" autofocus>
+            <label for="email">Tên đăng nhập hoặc Email *</label>
+            <input id="email" name="email" type="text" required placeholder="Email khách hàng hoặc username nhân viên" autofocus>
           </div>
 
           <div class="form-field" style="margin-bottom: 22px;">
@@ -37,21 +37,59 @@
             <input id="password" name="password" type="password" required placeholder="••••••••">
           </div>
 
-          <button type="submit" class="button-gold" style="width: 100%; padding: 14px; font-weight: bold;">
-            Đăng nhập ngay
+          <button type="submit" class="button-gold" style="width: 100%; padding: 14px; font-weight: bold; font-size: 11px;">
+            Đăng nhập hệ thống
           </button>
         </form>
 
-        <div style="margin-top: 25px; padding-top: 20px; border-top: 1px solid var(--line); text-align: center; font-size: 13px; color: var(--muted);">
-          <span>Chưa có tài khoản thành viên? </span>
-          <a th:href="@{/register}" style="color: var(--gold-dark); font-weight: bold; text-decoration: underline;">Đăng ký ngay tại đây</a>
+        <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid var(--line); text-align: center; font-size: 13px; color: var(--muted);">
+          <span>Khách hàng chưa có tài khoản? </span>
+          <a th:href="@{/register}" style="color: var(--gold-dark); font-weight: bold; text-decoration: underline;">Đăng ký thành viên ngay</a>
         </div>
 
-        <div style="margin-top: 15px; background: #faf7f2; border: 1px dashed var(--gold); padding: 12px; font-size: 11px; color: #666; border-radius: 3px;">
-          <strong>Tài khoản thử nghiệm:</strong><br>
-          • Email: <code>nam.nguyen@gmail.com</code> | Mật khẩu: <code>123456</code><br>
-          • Email: <code>mai.le@gmail.com</code> | Mật khẩu: <code>123456</code>
+        <!-- Hướng dẫn tài khoản của TẤT CẢ các vai trò -->
+        <div style="margin-top: 20px; background: #faf7f2; border: 1px dashed var(--gold); padding: 14px 16px; font-size: 12px; color: #444; border-radius: 4px;">
+          <strong style="color: var(--gold-dark); display: block; margin-bottom: 6px; font-size: 12px; text-transform: uppercase;">
+            🔑 Danh sách tài khoản thử nghiệm các vai trò (Mật khẩu: <code>123456</code>):
+          </strong>
+          <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
+            <tbody>
+              <tr style="border-bottom: 1px solid #ede7db;">
+                <td style="padding: 4px 0;"><strong>Khách hàng:</strong></td>
+                <td><code>nam.nguyen@gmail.com</code> (hoặc <code>mai.le@gmail.com</code>)</td>
+              </tr>
+              <tr style="border-bottom: 1px solid #ede7db;">
+                <td style="padding: 4px 0;"><strong>Quản trị viên (ADMIN):</strong></td>
+                <td><code>admin</code></td>
+              </tr>
+              <tr style="border-bottom: 1px solid #ede7db;">
+                <td style="padding: 4px 0;"><strong>Quản lý (MANAGER):</strong></td>
+                <td><code>manager01</code></td>
+              </tr>
+              <tr style="border-bottom: 1px solid #ede7db;">
+                <td style="padding: 4px 0;"><strong>Lễ tân (RECEPTIONIST):</strong></td>
+                <td><code>reception01</code></td>
+              </tr>
+              <tr style="border-bottom: 1px solid #ede7db;">
+                <td style="padding: 4px 0;"><strong>Đầu bếp (CHEF):</strong></td>
+                <td><code>chef01</code></td>
+              </tr>
+              <tr style="border-bottom: 1px solid #ede7db;">
+                <td style="padding: 4px 0;"><strong>Thu ngân (CASHIER):</strong></td>
+                <td><code>cashier01</code></td>
+              </tr>
+              <tr style="border-bottom: 1px solid #ede7db;">
+                <td style="padding: 4px 0;"><strong>Phục vụ (WAITER):</strong></td>
+                <td><code>waiter01</code></td>
+              </tr>
+              <tr>
+                <td style="padding: 4px 0;"><strong>Thủ kho (STOREKEEPER):</strong></td>
+                <td><code>storekeeper01</code></td>
+              </tr>
+            </tbody>
+          </table>
         </div>
+
       </div>
     </div>
   </section>
