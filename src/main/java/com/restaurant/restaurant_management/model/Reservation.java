@@ -14,12 +14,14 @@ public class Reservation {
     private String guests;
     private String message;
     private String status = "PENDING"; // PENDING, CONFIRMED, SEATED, CANCELLED
+    private String assignedTableNumber; // Bàn được gán
+    private String handledByEmployeeName; // Lễ tân trực tiếp xác nhận & gán bàn
     private LocalDateTime createdAt = LocalDateTime.now();
 
     public Reservation() {
     }
 
-    public Reservation(Long id, Long customerId, String customerName, String phone, String email, String date, String time, String guests, String message, String status) {
+    public Reservation(Long id, Long customerId, String customerName, String phone, String email, String date, String time, String guests, String message, String status, String assignedTableNumber, String handledByEmployeeName) {
         this.id = id;
         this.customerId = customerId;
         this.customerName = customerName;
@@ -30,6 +32,8 @@ public class Reservation {
         this.guests = guests;
         this.message = message;
         this.status = status;
+        this.assignedTableNumber = assignedTableNumber;
+        this.handledByEmployeeName = handledByEmployeeName;
     }
 
     public String getFormattedCreatedAt() {
@@ -38,15 +42,16 @@ public class Reservation {
     }
 
     public String getStatusBadgeClass() {
-        if ("CONFIRMED".equalsIgnoreCase(status) || "SEATED".equalsIgnoreCase(status)) return "badge-success";
+        if ("CONFIRMED".equalsIgnoreCase(status)) return "badge-success";
+        if ("SEATED".equalsIgnoreCase(status)) return "badge-info";
         if ("CANCELLED".equalsIgnoreCase(status)) return "badge-danger";
-        return "badge-info";
+        return "badge-warning";
     }
 
     public String getStatusDisplayName() {
         if ("PENDING".equalsIgnoreCase(status)) return "Chờ Lễ tân duyệt";
         if ("CONFIRMED".equalsIgnoreCase(status)) return "Đã xác nhận & Giữ bàn";
-        if ("SEATED".equalsIgnoreCase(status)) return "Đang dùng bữa";
+        if ("SEATED".equalsIgnoreCase(status)) return "Đang dùng bữa tại bàn";
         if ("CANCELLED".equalsIgnoreCase(status)) return "Đã hủy";
         return status;
     }
@@ -129,6 +134,22 @@ public class Reservation {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public String getAssignedTableNumber() {
+        return assignedTableNumber;
+    }
+
+    public void setAssignedTableNumber(String assignedTableNumber) {
+        this.assignedTableNumber = assignedTableNumber;
+    }
+
+    public String getHandledByEmployeeName() {
+        return handledByEmployeeName;
+    }
+
+    public void setHandledByEmployeeName(String handledByEmployeeName) {
+        this.handledByEmployeeName = handledByEmployeeName;
     }
 
     public LocalDateTime getCreatedAt() {
