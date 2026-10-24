@@ -34,7 +34,7 @@
              style="background: white; border: 1px solid var(--admin-line); border-radius: 6px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); position: relative;">
           
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-            <strong style="font-size: 18px; font-family: Georgia, serif;" th:text="${table.tableNumber}">T1-01</strong>
+            <strong style="font-size: 18px; font-family: 'Playfair Display', 'Times New Roman', serif;" th:text="${table.tableNumber}">T1-01</strong>
             <span class="badge-status" 
                   th:classappend="${table.status == 'AVAILABLE' ? 'status-available' : (table.status == 'OCCUPIED' ? 'status-occupied' : (table.status == 'RESERVED' ? 'status-reserved' : 'status-cancelled'))}"
                   th:text="${table.statusDisplayName}">Trống</span>

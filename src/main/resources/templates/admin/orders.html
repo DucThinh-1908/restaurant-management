@@ -66,7 +66,7 @@
                 </ul>
               </td>
               <td>
-                <strong style="font-family: Georgia, serif; font-size: 16px;" 
+                <strong style="font-family: 'Playfair Display', 'Times New Roman', serif; font-size: 16px;" 
                         th:text="${#numbers.formatDecimal(order.totalAmount, 0, 'COMMA', 0, 'POINT')} + ' đ'">480k</strong>
                 <small style="display: block; color: var(--admin-text-muted);" 
                        th:text="${order.paymentMethod == 'BANK_TRANSFER' ? 'Chuyển khoản QR' : 'Tiền mặt COD'}"></small>

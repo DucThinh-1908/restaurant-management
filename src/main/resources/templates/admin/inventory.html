@@ -60,7 +60,7 @@
               <td th:text="${ing.unit}">kg</td>
               <td style="font-weight: bold; font-size: 15px;" th:text="${ing.stockQuantity}">25.5</td>
               <td style="color: var(--admin-text-muted);" th:text="${ing.minStockLevel}">5.0</td>
-              <td style="font-family: Georgia, serif;" th:text="${#numbers.formatDecimal(ing.costPrice, 0, 'COMMA', 0, 'POINT')} + ' đ'">450,000 đ</td>
+              <td style="font-family: 'Playfair Display', 'Times New Roman', serif;" th:text="${#numbers.formatDecimal(ing.costPrice, 0, 'COMMA', 0, 'POINT')} + ' đ'">450,000 đ</td>
               <td>
                 <span class="badge-status" 
                       th:classappend="${ing.lowStock ? 'status-cancelled' : 'status-completed'}"

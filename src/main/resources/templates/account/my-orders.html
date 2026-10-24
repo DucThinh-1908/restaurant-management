@@ -84,7 +84,7 @@
       </div>
 
       <div th:if="${orders == null or #lists.isEmpty(orders)}" class="empty-state">
-        <div style="font-size: 44px; margin-bottom: 12px;">📋</div>
+        <div style="font-size: 44px; margin-bottom: 12px;"></div>
         <h3>Quý khách chưa có đơn hàng nào</h3>
         <p style="color: var(--muted); margin: 8px 0 20px;">Hãy đặt những món ăn đầu tiên từ thực đơn của GoD Fine Dining!</p>
         <a th:href="@{/menu}" class="button-gold">Xem thực đơn &amp; Đặt món</a>

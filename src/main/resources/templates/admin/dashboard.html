@@ -81,7 +81,7 @@
                   <span th:text="${order.customerName}">Nguyễn Văn A</span>
                   <small style="display: block; color: var(--admin-text-muted);" th:text="${order.customerPhone}"></small>
                 </td>
-                <td style="font-weight: bold; font-family: Georgia, serif;" 
+                <td style="font-weight: bold; font-family: 'Playfair Display', 'Times New Roman', serif;" 
                     th:text="${#numbers.formatDecimal(order.totalAmount, 0, 'COMMA', 0, 'POINT')} + ' đ'">480k</td>
                 <td>
                   <span class="badge-status" 

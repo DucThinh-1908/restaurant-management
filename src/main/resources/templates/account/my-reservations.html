@@ -63,7 +63,7 @@
       </div>
 
       <div th:if="${reservations == null or #lists.isEmpty(reservations)}" class="empty-state">
-        <div style="font-size: 44px; margin-bottom: 12px;">🍽</div>
+        <div style="font-size: 44px; margin-bottom: 12px;"></div>
         <h3>Quý khách chưa có yêu cầu đặt bàn nào</h3>
         <p style="color: var(--muted); margin: 8px 0 20px;">Hãy đặt trước bàn ăn để nhà hàng đón tiếp quý khách chu đáo nhất.</p>
         <a th:href="@{/contact#reservation}" class="button-gold">Gửi yêu cầu đặt bàn</a>
