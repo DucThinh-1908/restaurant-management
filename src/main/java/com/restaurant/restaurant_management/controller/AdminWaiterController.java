@@ -28,16 +28,13 @@ public class AdminWaiterController {
     private final TableService tableService;
     private final OrderService orderService;
     private final MenuService menuService;
-    private final ReservationService reservationService;
 
     public AdminWaiterController(TableService tableService,
                                  OrderService orderService,
-                                 MenuService menuService,
-                                 ReservationService reservationService) {
+                                 MenuService menuService) {
         this.tableService = tableService;
         this.orderService = orderService;
         this.menuService = menuService;
-        this.reservationService = reservationService;
     }
 
     @GetMapping
@@ -74,7 +71,6 @@ public class AdminWaiterController {
         model.addAttribute("menuItems", menuItems);
         model.addAttribute("menuByCategory", menuByCategory);
         model.addAttribute("availableTables", availableTables);
-        model.addAttribute("reservations", reservationService.getAllReservations());
 
         model.addAttribute("availableCount", availableCount);
         model.addAttribute("occupiedCount", occupiedCount);

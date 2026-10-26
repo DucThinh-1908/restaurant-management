@@ -19,8 +19,8 @@
       Bàn Làm Việc
     </div>
 
-    <!-- Đặt bàn (Lễ tân, Phục vụ xem lịch, Admin, Quản lý) -->
-    <a th:if="${employee.roleName == 'RECEPTIONIST' or employee.roleName == 'WAITER' or employee.roleName == 'ADMIN' or employee.roleName == 'MANAGER'}"
+    <!-- Đặt bàn (Chuyên trách Lễ tân, Admin, Quản lý) -->
+    <a th:if="${employee.roleName == 'RECEPTIONIST' or employee.roleName == 'ADMIN' or employee.roleName == 'MANAGER'}"
        th:href="@{/admin/reservations}" th:classappend="${activeAdminPage == 'reservations'} ? 'active' : ''">
       <span class="admin-nav-icon"></span> Đặt Bàn (Lễ Tân)
     </a>

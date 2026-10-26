@@ -87,9 +87,6 @@
           <span></span> Trạm Ra Món (Bưng Món Ra Bàn)
           <span th:if="${readyCount > 0}" class="badge-pill" th:text="${readyCount}">1</span>
         </button>
-        <button type="button" class="waiter-tab-btn" id="tab-btn-reservations" onclick="switchTab('reservations')">
-          <span></span> Lịch Đặt Bàn Trong Ngày
-        </button>
       </div>
 
       <!-- ========================================================
@@ -309,52 +306,10 @@
         </div>
       </div>
 
-      <!-- ========================================================
-           TAB 3: LỊCH ĐẶT BÀN TRONG NGÀY
-           ======================================================== -->
-      <div id="tab-content-reservations" style="display: none;">
-        <div style="background: #fff; padding: 18px 24px; border-radius: 6px; border: 1px solid var(--admin-line); margin-bottom: 24px;">
-          <h2 style="font-size: 18px; margin: 0 0 6px;"> Danh Sách Khách Hàng Đặt Bàn Trước</h2>
-          <p style="font-size: 13px; color: var(--admin-text-muted); margin: 0;">Theo dõi giờ khách đến và số lượng khách để nhân viên phục vụ set up bàn trước ca ăn.</p>
-        </div>
-
-        <div style="background: #fff; border: 1px solid var(--admin-line); border-radius: 6px; overflow: hidden;">
-          <table class="admin-table" style="width: 100%; border-collapse: collapse;">
-            <thead>
-              <tr style="background: #f7f5f0; border-bottom: 1px solid var(--admin-line); text-align: left; font-size: 12px; text-transform: uppercase;">
-                <th style="padding: 12px 18px;">Mã</th>
-                <th style="padding: 12px 18px;">Khách Hàng</th>
-                <th style="padding: 12px 18px;">Số Khách</th>
-                <th style="padding: 12px 18px;">Ngày Giờ</th>
-                <th style="padding: 12px 18px;">Bàn Phân Công</th>
-                <th style="padding: 12px 18px;">Trạng Thái</th>
-                <th style="padding: 12px 18px;">Ghi Chú</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr th:each="res : ${reservations}" style="border-bottom: 1px solid #f0ede6; font-size: 13px;">
-                <td style="padding: 12px 18px;"><strong th:text="'#RSV-' + ${res.id}">#RSV-1</strong></td>
-                <td style="padding: 12px 18px;">
-                  <strong th:text="${res.customerName}">Nguyễn Hoàng Nam</strong>
-                  <div style="font-size: 11px; color: var(--admin-text-muted);" th:text="${res.phone}">0901234567</div>
-                </td>
-                <td style="padding: 12px 18px;"><span th:text="${res.guestCount} + ' người'">4 người</span></td>
-                <td style="padding: 12px 18px;">
-                  <strong th:text="${res.reservationTime}">19:00</strong>
-                  <div style="font-size: 11px; color: var(--admin-text-muted);" th:text="${res.reservationDate}">2026-10-24</div>
-                </td>
-                <td style="padding: 12px 18px;">
-                  <strong style="color: var(--admin-gold);" th:text="${res.assignedTable != null ? res.assignedTable : 'Chưa xếp'}">T1-04</strong>
-                </td>
-                <td style="padding: 12px 18px;">
-                  <span class="badge" th:classappend="${res.statusBadgeClass}" th:text="${res.statusDisplayName}">Đã xác nhận</span>
-                </td>
-                <td style="padding: 12px 18px; color: var(--admin-text-muted); font-size: 12px;" th:text="${res.note != null ? res.note : '-'}">-</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
       </div>
+
+    </div>
+  </div>
 
     </div>
   </div>
@@ -501,11 +456,9 @@
   function switchTab(tabName) {
     document.getElementById('tab-content-tables').style.display = 'none';
     document.getElementById('tab-content-runner').style.display = 'none';
-    document.getElementById('tab-content-reservations').style.display = 'none';
 
     document.getElementById('tab-btn-tables').classList.remove('active');
     document.getElementById('tab-btn-runner').classList.remove('active');
-    document.getElementById('tab-btn-reservations').classList.remove('active');
 
     if (tabName === 'tables') {
       document.getElementById('tab-content-tables').style.display = 'block';
@@ -513,9 +466,6 @@
     } else if (tabName === 'runner') {
       document.getElementById('tab-content-runner').style.display = 'block';
       document.getElementById('tab-btn-runner').classList.add('active');
-    } else if (tabName === 'reservations') {
-      document.getElementById('tab-content-reservations').style.display = 'block';
-      document.getElementById('tab-btn-reservations').classList.add('active');
     }
   }
 
