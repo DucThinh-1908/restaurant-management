@@ -193,6 +193,7 @@ CREATE TABLE IF NOT EXISTS orders (
     customer_count INT NOT NULL DEFAULT 1 COMMENT 'Số lượng khách thực tế tại bàn',
     status ENUM('PENDING', 'COOKING', 'READY', 'SERVING', 'COMPLETED', 'CANCELLED') DEFAULT 'PENDING'
         COMMENT 'Trạng thái order: PENDING (Chờ chế biến), COOKING (Đang nấu), READY (Bếp nấu xong/Chờ bưng), SERVING (Khách đang dùng bữa), COMPLETED, CANCELLED',
+    is_bill_requested BOOLEAN NOT NULL DEFAULT FALSE COMMENT 'Phục vụ đã gửi yêu cầu thanh toán sang thu ngân',
     subtotal DECIMAL(12, 2) NOT NULL DEFAULT 0.00 COMMENT 'Tổng tiền món (Service tính từ chi tiết món)',
     discount DECIMAL(12, 2) NOT NULL DEFAULT 0.00 COMMENT 'Giảm giá (VND) - không vượt quá subtotal',
     tax_percent DECIMAL(5, 2) NOT NULL DEFAULT 8.00 COMMENT 'Tỷ lệ thuế VAT (% từ 0 đến 100)',
