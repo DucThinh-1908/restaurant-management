@@ -64,7 +64,9 @@ public class AdminAuthController {
             return "/admin/reservations";
         } else if ("WAITER".equalsIgnoreCase(roleName)) {
             return "/admin/tables";
-        } else if ("CHEF".equalsIgnoreCase(roleName) || "CASHIER".equalsIgnoreCase(roleName)) {
+        } else if ("CHEF".equalsIgnoreCase(roleName)) {
+            return "/admin/kitchen";
+        } else if ("CASHIER".equalsIgnoreCase(roleName)) {
             return "/admin/orders";
         } else if ("STOREKEEPER".equalsIgnoreCase(roleName)) {
             return "/admin/inventory";
