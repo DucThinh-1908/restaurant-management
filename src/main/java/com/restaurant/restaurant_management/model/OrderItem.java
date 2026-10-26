@@ -28,6 +28,11 @@ public class OrderItem {
         return unitPrice.multiply(BigDecimal.valueOf(quantity));
     }
 
+    public String getFormattedTotalPrice() {
+        BigDecimal total = getTotalPrice();
+        return java.text.NumberFormat.getNumberInstance(java.util.Locale.US).format(total) + " đ";
+    }
+
     public Long getId() {
         return id;
     }

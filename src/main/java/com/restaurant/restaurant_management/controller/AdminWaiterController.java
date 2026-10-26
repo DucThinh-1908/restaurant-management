@@ -210,11 +210,15 @@ public class AdminWaiterController {
         Optional<DiningTable> tableOpt = tableService.findById(tableId);
         String tableName = tableOpt.map(DiningTable::getTableNumber).orElse("Bàn");
 
-        orderService.clearTable(tableId, orderId);
-        tableService.updateStatus(tableId, "AVAILABLE");
-
-        redirectAttributes.addFlashAttribute("successMessage",
-                "Đã dọn dẹp xong " + tableName + ". Bàn hiện đã sẵn sàng đón lượt khách mới!");
+        boolean cleared = orderService.clearTable(tableId, orderId);
+        if (cleared) {
+            tableService.updateStatus(tableId, "AVAILABLE");
+            redirectAttributes.addFlashAttribute("successMessage",
+                    "Đã dọn dẹp xong " + tableName + ". Bàn hiện đã sẵn sàng đón lượt khách mới!");
+        } else {
+            redirectAttributes.addFlashAttribute("errorMessage",
+                    "Bàn " + tableName + " chưa hoàn tất thanh toán tại quầy Thu Ngân! Vui lòng nhờ Thu Ngân xuất hóa đơn trước khi dọn bàn.");
+        }
         return "redirect:/admin/waiter";
     }
 
@@ -225,8 +229,9 @@ public class AdminWaiterController {
                               RedirectAttributes redirectAttributes) {
         if (session.getAttribute("loggedInEmployee") == null) return "redirect:/admin/login";
 
+        orderService.requestBill(orderCode);
         redirectAttributes.addFlashAttribute("successMessage",
-                "Đã gửi yêu cầu in hóa đơn cho " + tableNumber + " (Mã: " + orderCode + ") đến quầy Thu Ngân!");
+                "Đã gửi yêu cầu in hóa đơn cho " + tableNumber + " (Mã: " + orderCode + ") sang quầy Thu Ngân thành công!");
         return "redirect:/admin/waiter";
     }
 }

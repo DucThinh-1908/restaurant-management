@@ -100,6 +100,10 @@ public class OrderService {
             if (tc != null) order.setTransactionCode(tc);
         } catch (SQLException ignored) {}
 
+        try {
+            order.setBillRequested(rs.getBoolean("is_bill_requested"));
+        } catch (SQLException ignored) {}
+
         return order;
     }
 
@@ -143,7 +147,7 @@ public class OrderService {
                 String sql = "SELECT o.id, o.order_code, o.order_type, o.customer_id, " +
                              "COALESCE(c.full_name, 'Khách Vãng Lai') AS customer_name, " +
                              "COALESCE(o.contact_phone, c.phone, '') AS customer_phone, " +
-                             "o.delivery_address, o.note, o.status, " +
+                             "o.delivery_address, o.note, o.status, o.is_bill_requested, " +
                              "o.subtotal, o.discount, o.tax_percent, o.tax_amount, o.total_amount, " +
                              "o.created_at, t.table_number " +
                              "FROM orders o " +
@@ -169,7 +173,7 @@ public class OrderService {
                 String sql = "SELECT oi.item_name, SUM(oi.quantity) AS total_qty " +
                              "FROM order_items oi " +
                              "JOIN orders o ON oi.order_id = o.id " +
-                             "WHERE o.status IN ('PENDING', 'COOKING') " +
+                             "WHERE oi.status IN ('PENDING', 'COOKING') AND o.status NOT IN ('COMPLETED', 'CANCELLED') " +
                              "GROUP BY oi.item_name " +
                              "ORDER BY total_qty DESC";
                 Map<String, Integer> queue = new LinkedHashMap<>();
@@ -201,17 +205,61 @@ public class OrderService {
                 jdbcTemplate.update(sql, status, status, orderId);
 
                 // Cập nhật trạng thái các món chi tiết
-                String itemStatus = "COMPLETED".equalsIgnoreCase(status) ? "SERVED" :
-                                   ("SERVING".equalsIgnoreCase(status) ? "SERVED" :
-                                   ("READY".equalsIgnoreCase(status) ? "COOKING" :
-                                   ("COOKING".equalsIgnoreCase(status) ? "COOKING" : "PENDING")));
-                jdbcTemplate.update("UPDATE order_items SET status = ? WHERE order_id = ?", itemStatus, orderId);
+                if ("COOKING".equalsIgnoreCase(status)) {
+                    jdbcTemplate.update("UPDATE order_items SET status = 'COOKING' WHERE order_id = ? AND status = 'PENDING'", orderId);
+                    deductInventoryForOrder(orderId);
+                } else if ("COMPLETED".equalsIgnoreCase(status) || "SERVING".equalsIgnoreCase(status)) {
+                    jdbcTemplate.update("UPDATE order_items SET status = 'SERVED' WHERE order_id = ? AND status != 'CANCELLED'", orderId);
+                }
             } catch (Exception e) {
                 System.err.println("Lỗi cập nhật order #" + orderId + " trong MySQL: " + e.getMessage());
             }
         }
 
         inMemoryOrders.stream().filter(o -> o.getId().equals(orderId)).findFirst().ifPresent(o -> o.setStatus(status));
+    }
+
+    private void deductInventoryForOrder(Long orderId) {
+        if (jdbcTemplate == null || orderId == null) return;
+        try {
+            // Kiểm tra đã trừ kho cho order này chưa để tránh trừ trùng lặp
+            Integer existingCount = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM inventory_transactions WHERE reference_type = 'ORDER' AND reference_id = ? AND transaction_type = 'RECIPE_CONSUMPTION'",
+                Integer.class, orderId
+            );
+            if (existingCount != null && existingCount > 0) return;
+
+            String query = "SELECT ri.ingredient_id, (ri.quantity_required * oi.quantity) AS total_qty_needed, " +
+                           "m.name AS dish_name, oi.quantity AS dish_qty, i.cost_price " +
+                           "FROM order_items oi " +
+                           "JOIN recipe_items ri ON oi.menu_item_id = ri.menu_item_id " +
+                           "JOIN menu_items m ON oi.menu_item_id = m.id " +
+                           "JOIN ingredients i ON ri.ingredient_id = i.id " +
+                           "WHERE oi.order_id = ? AND oi.status != 'CANCELLED'";
+
+            List<Map<String, Object>> rows = jdbcTemplate.queryForList(query, orderId);
+            for (Map<String, Object> row : rows) {
+                Long ingredientId = ((Number) row.get("ingredient_id")).longValue();
+                BigDecimal totalQtyNeeded = (BigDecimal) row.get("total_qty_needed");
+                String dishName = (String) row.get("dish_name");
+                Integer dishQty = ((Number) row.get("dish_qty")).intValue();
+                BigDecimal costPrice = (BigDecimal) row.get("cost_price");
+
+                // Trừ tồn kho trong DB
+                jdbcTemplate.update("UPDATE ingredients SET stock_quantity = GREATEST(0, stock_quantity - ?), updated_at = NOW() WHERE id = ?", totalQtyNeeded, ingredientId);
+
+                // Lấy tồn kho mới sau trừ
+                BigDecimal newBalance = jdbcTemplate.queryForObject("SELECT stock_quantity FROM ingredients WHERE id = ?", BigDecimal.class, ingredientId);
+
+                // Ghi nhận nhật ký biến động kho (Audit log)
+                String note = "Xuất chế biến " + dishQty + " phần " + dishName + " cho đơn #" + orderId;
+                String insertTx = "INSERT INTO inventory_transactions (ingredient_id, transaction_type, quantity, balance_after, unit_price, reference_type, reference_id, employee_id, note) " +
+                                  "VALUES (?, 'RECIPE_CONSUMPTION', ?, ?, ?, 'ORDER', ?, 5, ?)";
+                jdbcTemplate.update(insertTx, ingredientId, totalQtyNeeded.negate(), newBalance, costPrice, orderId, note);
+            }
+        } catch (Exception e) {
+            System.err.println("Lỗi deductInventoryForOrder(" + orderId + "): " + e.getMessage());
+        }
     }
 
     // -------------------------------------------------------------
@@ -223,7 +271,7 @@ public class OrderService {
                 String sql = "SELECT o.id, o.order_code, o.order_type, o.customer_id, " +
                              "COALESCE(c.full_name, 'Khách Vãng Lai') AS customer_name, " +
                              "COALESCE(o.contact_phone, c.phone, '') AS customer_phone, " +
-                             "o.delivery_address, o.note, o.status, " +
+                             "o.delivery_address, o.note, o.status, o.is_bill_requested, " +
                              "o.subtotal, o.discount, o.tax_percent, o.tax_amount, o.total_amount, " +
                              "o.created_at, t.table_number " +
                              "FROM orders o " +
@@ -247,7 +295,7 @@ public class OrderService {
                 String sql = "SELECT o.id, o.order_code, o.order_type, o.customer_id, " +
                              "COALESCE(c.full_name, 'Khách Vãng Lai') AS customer_name, " +
                              "COALESCE(o.contact_phone, c.phone, '') AS customer_phone, " +
-                             "o.delivery_address, o.note, o.status, " +
+                             "o.delivery_address, o.note, o.status, o.is_bill_requested, " +
                              "o.subtotal, o.discount, o.tax_percent, o.tax_amount, o.total_amount, " +
                              "o.created_at, t.table_number " +
                              "FROM orders o " +
@@ -273,7 +321,7 @@ public class OrderService {
                 String sql = "SELECT o.id, o.order_code, o.order_type, o.customer_id, " +
                              "COALESCE(c.full_name, 'Khách Vãng Lai') AS customer_name, " +
                              "COALESCE(o.contact_phone, c.phone, '') AS customer_phone, " +
-                             "o.delivery_address, o.note, o.status, " +
+                             "o.delivery_address, o.note, o.status, o.is_bill_requested, " +
                              "o.subtotal, o.discount, o.tax_percent, o.tax_amount, o.total_amount, " +
                              "o.created_at, t.table_number " +
                              "FROM orders o " +
@@ -465,7 +513,7 @@ public class OrderService {
                 String sql = "SELECT o.id, o.order_code, o.order_type, o.customer_id, " +
                              "COALESCE(c.full_name, 'Khách Tại Bàn') AS customer_name, " +
                              "COALESCE(o.contact_phone, c.phone, '') AS customer_phone, " +
-                             "o.delivery_address, o.note, o.status, " +
+                             "o.delivery_address, o.note, o.status, o.is_bill_requested, " +
                              "o.subtotal, o.discount, o.tax_percent, o.tax_amount, o.total_amount, " +
                              "o.created_at, t.table_number " +
                              "FROM orders o " +
@@ -590,7 +638,7 @@ public class OrderService {
                 BigDecimal newTotal = newSubtotal.add(newTax);
 
                 // Cập nhật đơn hàng (đưa trạng thái về COOKING để Bếp biết có món bổ sung cần nấu)
-                jdbcTemplate.update("UPDATE orders SET subtotal = ?, tax_amount = ?, total_amount = ?, status = 'COOKING' WHERE id = ?",
+                jdbcTemplate.update("UPDATE orders SET subtotal = ?, tax_amount = ?, total_amount = ?, status = 'PENDING' WHERE id = ?",
                         newSubtotal, newTax, newTotal, orderId);
                 return;
             } catch (Exception e) {
@@ -612,7 +660,7 @@ public class OrderService {
             o.setSubtotal(subtotal);
             o.setTaxAmount(taxAmount);
             o.setTotalAmount(subtotal.add(taxAmount));
-            o.setStatus("COOKING");
+            o.setStatus("PENDING");
         }
     }
 
@@ -645,20 +693,40 @@ public class OrderService {
         }
     }
 
-    public synchronized void clearTable(Long tableId, Long orderId) {
+    public synchronized void requestBill(String orderCode) {
+        if (orderCode == null || orderCode.isBlank()) return;
         if (jdbcTemplate != null) {
             try {
+                jdbcTemplate.update("UPDATE orders SET is_bill_requested = TRUE WHERE order_code = ?", orderCode);
+                return;
+            } catch (Exception e) {
+                System.err.println("Lỗi requestBill: " + e.getMessage());
+            }
+        }
+        inMemoryOrders.stream().filter(o -> orderCode.equalsIgnoreCase(o.getOrderCode()))
+                .findFirst().ifPresent(o -> o.setBillRequested(true));
+    }
+
+    public synchronized boolean clearTable(Long tableId, Long orderId) {
+        if (jdbcTemplate != null) {
+            try {
+                if (orderId != null) {
+                    List<String> statuses = jdbcTemplate.query(
+                            "SELECT status FROM orders WHERE id = ?", (rs, rowNum) -> rs.getString("status"), orderId);
+                    if (!statuses.isEmpty() && !"COMPLETED".equalsIgnoreCase(statuses.get(0))) {
+                        // Không cho phép dọn bàn nếu đơn chưa được thanh toán tại Thu Ngân!
+                        return false;
+                    }
+                }
                 if (tableId != null) {
                     jdbcTemplate.update("UPDATE dining_tables SET status = 'AVAILABLE' WHERE id = ?", tableId);
                 }
-                if (orderId != null) {
-                    jdbcTemplate.update("UPDATE orders SET status = 'COMPLETED', completed_at = NOW() WHERE id = ?", orderId);
-                }
-                return;
+                return true;
             } catch (Exception e) {
                 System.err.println("Lỗi clearTable: " + e.getMessage());
             }
         }
+        return false;
     }
 
     // -------------------------------------------------------------
@@ -671,14 +739,14 @@ public class OrderService {
                 String sql = "SELECT o.id, o.order_code, o.order_type, o.table_id, o.customer_id, " +
                              "COALESCE(c.full_name, 'Khách vãng lai') AS customer_name, " +
                              "COALESCE(c.phone, o.contact_phone) AS customer_phone, " +
-                             "o.delivery_address, o.note, o.status, " +
+                             "o.delivery_address, o.note, o.status, o.is_bill_requested, " +
                              "o.subtotal, o.discount, o.tax_percent, o.tax_amount, o.total_amount, " +
                              "o.created_at, o.completed_at, t.table_number " +
                              "FROM orders o " +
                              "LEFT JOIN dining_tables t ON o.table_id = t.id " +
                              "LEFT JOIN customers c ON o.customer_id = c.id " +
                              "WHERE o.status IN ('PENDING', 'COOKING', 'READY', 'SERVING') " +
-                             "ORDER BY CASE WHEN o.order_type = 'DINE_IN' THEN 0 ELSE 1 END, o.id DESC";
+                             "ORDER BY o.is_bill_requested DESC, CASE WHEN o.order_type = 'DINE_IN' THEN 0 ELSE 1 END, o.id DESC";
                 List<Order> result = jdbcTemplate.query(sql, (rs, rowNum) -> mapRowToOrder(rs));
                 attachItems(result);
                 return result;
@@ -697,7 +765,7 @@ public class OrderService {
                 String sql = "SELECT o.id, o.order_code, o.order_type, o.table_id, o.customer_id, " +
                              "COALESCE(c.full_name, 'Khách vãng lai') AS customer_name, " +
                              "COALESCE(c.phone, o.contact_phone) AS customer_phone, " +
-                             "o.delivery_address, o.note, o.status, " +
+                             "o.delivery_address, o.note, o.status, o.is_bill_requested, " +
                              "o.subtotal, o.discount, o.tax_percent, o.tax_amount, o.total_amount, " +
                              "o.created_at, o.completed_at, t.table_number, " +
                              "p.payment_method, p.transaction_code, e.full_name AS cashier_name " +
@@ -741,7 +809,7 @@ public class OrderService {
                 BigDecimal totalAmount = afterDiscount.add(taxAmount);
 
                 // 2. Cập nhật đơn hàng sang COMPLETED
-                String updateOrderSql = "UPDATE orders SET status = 'COMPLETED', subtotal = ?, discount = ?, " +
+                String updateOrderSql = "UPDATE orders SET status = 'COMPLETED', is_bill_requested = FALSE, subtotal = ?, discount = ?, " +
                                         "tax_amount = ?, total_amount = ?, completed_at = NOW() WHERE id = ?";
                 jdbcTemplate.update(updateOrderSql, subtotal, discount, taxAmount, totalAmount, orderId);
 
@@ -813,7 +881,7 @@ public class OrderService {
                 transferRevenue = jdbcTemplate.queryForObject(transSql, BigDecimal.class);
                 if (transferRevenue == null) transferRevenue = BigDecimal.ZERO;
 
-                String cardSql = "SELECT COALESCE(SUM(amount), 0) FROM payments WHERE payment_method = 'CREDIT_CARD' AND DATE(paid_at) = CURRENT_DATE()";
+                String cardSql = "SELECT COALESCE(SUM(amount), 0) FROM payments WHERE payment_method IN ('CREDIT_CARD', 'E_WALLET') AND DATE(paid_at) = CURRENT_DATE()";
                 cardRevenue = jdbcTemplate.queryForObject(cardSql, BigDecimal.class);
                 if (cardRevenue == null) cardRevenue = BigDecimal.ZERO;
 

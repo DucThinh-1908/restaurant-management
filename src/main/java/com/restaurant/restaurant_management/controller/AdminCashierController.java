@@ -94,7 +94,7 @@ public class AdminCashierController {
         } else {
             redirectAttributes.addFlashAttribute("errorMessage", "Không thể hoàn tất thanh toán cho đơn #" + orderId + "!");
         }
-        return "redirect:/admin/cashier";
+        return "redirect:/admin/cashier?tab=history";
     }
 
     @GetMapping("/receipt/{id}")

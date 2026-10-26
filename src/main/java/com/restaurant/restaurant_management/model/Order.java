@@ -18,6 +18,7 @@ public class Order {
     private String deliveryAddress;
     private String note;
     private String status = "PENDING"; // PENDING, COOKING, SERVING, COMPLETED, CANCELLED
+    private boolean billRequested = false;
     private BigDecimal subtotal = BigDecimal.ZERO;
     private BigDecimal discount = BigDecimal.ZERO;
     private BigDecimal taxPercent = new BigDecimal("8.00");
@@ -36,6 +37,16 @@ public class Order {
     public String getFormattedCreatedAt() {
         if (createdAt == null) return "";
         return createdAt.format(DateTimeFormatter.ofPattern("HH:mm - dd/MM/yyyy"));
+    }
+
+    public String getFormattedTotalAmount() {
+        if (totalAmount == null) return "0 đ";
+        return java.text.NumberFormat.getNumberInstance(java.util.Locale.US).format(totalAmount) + " đ";
+    }
+
+    public String getFormattedSubtotal() {
+        if (subtotal == null) return "0 đ";
+        return java.text.NumberFormat.getNumberInstance(java.util.Locale.US).format(subtotal) + " đ";
     }
 
     public long getMinutesWaiting() {
@@ -259,5 +270,13 @@ public class Order {
 
     public void setItems(List<OrderItem> items) {
         this.items = items;
+    }
+
+    public boolean isBillRequested() {
+        return billRequested;
+    }
+
+    public void setBillRequested(boolean billRequested) {
+        this.billRequested = billRequested;
     }
 }
