@@ -72,11 +72,18 @@
             </div>
 
             <div style="text-align: right;">
-              <span style="font-size: 12px; color: var(--muted);">Tổng thanh toán: </span>
-              <span style="font-family: var(--serif); font-size: 18px; font-weight: bold; color: var(--gold-dark);" 
-                    th:text="${#numbers.formatDecimal(order.totalAmount, 0, 'COMMA', 0, 'POINT')} + ' đ'">
-                0 đ
-              </span>
+              <div>
+                <span style="font-size: 12px; color: var(--muted);">Tổng thanh toán: </span>
+                <span style="font-family: var(--serif); font-size: 18px; font-weight: bold; color: var(--gold-dark);" 
+                      th:text="${#numbers.formatDecimal(order.totalAmount, 0, 'COMMA', 0, 'POINT')} + ' đ'">
+                  0 đ
+                </span>
+              </div>
+              <div style="margin-top: 5px;">
+                <a th:href="@{'/my-orders/' + ${order.id}}" style="font-size: 12px; color: var(--gold-dark); text-decoration: underline; font-weight: 500;">
+                  Xem hóa đơn chi tiết &amp; In ↗
+                </a>
+              </div>
             </div>
           </div>
 

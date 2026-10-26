@@ -72,31 +72,106 @@
           </div>
         </div>
 
-        <!-- Danh sách đơn hàng gần đây -->
+        <!-- Chi tiết đơn đặt món gần nhất -->
         <div>
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
             <h3 style="font-family: var(--serif); font-size: 20px; margin: 0;">Đơn đặt món gần nhất</h3>
-            <a th:href="@{/my-orders}" style="font-size: 12px; color: var(--gold-dark); text-decoration: underline;">Xem tất cả</a>
+            <a th:href="@{/my-orders}" style="font-size: 12px; color: var(--gold-dark); text-decoration: underline;">
+              Xem tất cả lịch sử (<span th:text="${orderCount}">0</span> đơn) →
+            </a>
           </div>
 
-          <div th:if="${recentOrders != null and not #lists.isEmpty(recentOrders)}">
-            <div th:each="order : ${recentOrders}" class="account-item-card">
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                <strong style="color: var(--gold-dark); font-family: monospace;" th:text="${order.orderCode}">ORD-001</strong>
-                <span class="badge" th:classappend="${order.statusBadgeClass}" th:text="${order.statusDisplayName}">Chờ duyệt</span>
+          <!-- Hiển thị chi tiết đơn mới nhất -->
+          <div th:if="${latestOrder != null}" class="form-card" style="box-shadow: 0 4px 20px rgba(0,0,0,0.04); padding: 22px 24px; border-radius: 6px;">
+            
+            <!-- Đầu thẻ: Mã đơn & Trạng thái -->
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid var(--line); padding-bottom: 12px; margin-bottom: 14px;">
+              <div>
+                <strong style="color: var(--gold-dark); font-family: monospace; font-size: 16px;" th:text="${latestOrder.orderCode}">ORD-001</strong>
+                <div style="font-size: 12px; color: var(--muted); margin-top: 2px;" th:text="${latestOrder.formattedCreatedAt} + ' • ' + ${latestOrder.orderTypeDisplayName}"></div>
               </div>
-              <div style="font-size: 13px; color: var(--muted); margin-bottom: 8px;" th:text="${order.formattedCreatedAt}"></div>
-              <div style="display: flex; justify-content: space-between; font-size: 14px; font-weight: bold;">
-                <span th:text="${order.items.size()} + ' món ăn'">2 món</span>
-                <span style="color: var(--ink); font-family: var(--serif);" 
-                      th:text="${#numbers.formatDecimal(order.totalAmount, 0, 'COMMA', 0, 'POINT')} + ' đ'">480,000 đ</span>
+              <span class="badge" th:classappend="${latestOrder.statusBadgeClass}" th:text="${latestOrder.statusDisplayName}">Hoàn thành</span>
+            </div>
+
+            <!-- Danh sách từng món ăn trong đơn -->
+            <div style="margin-bottom: 14px;">
+              <div style="font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 600; margin-bottom: 8px;">
+                Danh sách món đã đặt:
+              </div>
+              <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                <tbody>
+                  <tr th:each="item : ${latestOrder.items}" style="border-bottom: 1px dashed #f0ece3;">
+                    <td style="padding: 7px 0;">
+                      <strong th:text="${item.itemName}">Tên món</strong>
+                      <span th:if="${item.note != null and not #strings.isEmpty(item.note)}" 
+                            th:text="' (' + ${item.note} + ')'" 
+                            style="color: var(--muted); font-style: italic; font-size: 12px;"></span>
+                    </td>
+                    <td style="padding: 7px 8px; text-align: center; color: var(--muted); white-space: nowrap;" th:text="'x ' + ${item.quantity}">x 1</td>
+                    <td style="padding: 7px 0; text-align: right; font-family: var(--serif); white-space: nowrap;" 
+                        th:text="${#numbers.formatDecimal(item.totalPrice, 0, 'COMMA', 0, 'POINT')} + ' đ'">
+                      95,000 đ
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Thông tin giao hàng & thanh toán -->
+            <div style="background: #faf7f2; border: 1px solid var(--line); border-radius: 4px; padding: 10px 14px; font-size: 12px; margin-bottom: 14px; line-height: 1.6;">
+              <div th:if="${latestOrder.deliveryAddress != null and not #strings.isEmpty(latestOrder.deliveryAddress)}">
+                <span style="color: var(--muted);">Địa chỉ giao: </span>
+                <strong th:text="${latestOrder.deliveryAddress}" style="color: var(--ink);"></strong>
+              </div>
+              <div>
+                <span style="color: var(--muted);">Thanh toán: </span>
+                <span th:text="${latestOrder.paymentMethod == 'BANK_TRANSFER' ? 'Chuyển khoản QR ngân hàng' : 'Tiền mặt khi nhận (COD)'}"></span>
+              </div>
+              <div th:if="${latestOrder.note != null and not #strings.isEmpty(latestOrder.note)}">
+                <span style="color: var(--muted);">Ghi chú: </span>
+                <span th:text="${latestOrder.note}" style="font-style: italic;"></span>
               </div>
             </div>
+
+            <!-- Chi tiết hóa đơn: Tạm tính, Thuế, Tổng cộng -->
+            <div style="border-top: 1px solid var(--line); padding-top: 10px; margin-bottom: 14px; font-size: 12px;">
+              <div style="display: flex; justify-content: space-between; margin-bottom: 4px; color: var(--muted);">
+                <span>Tạm tính tiền món:</span>
+                <span style="font-family: var(--serif);" th:text="${#numbers.formatDecimal(latestOrder.subtotal, 0, 'COMMA', 0, 'POINT')} + ' đ'">445,000 đ</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; margin-bottom: 4px; color: var(--muted);">
+                <span>Thuế VAT (<span th:text="${latestOrder.taxPercent}">8</span>%):</span>
+                <span style="font-family: var(--serif);" th:text="${#numbers.formatDecimal(latestOrder.taxAmount, 0, 'COMMA', 0, 'POINT')} + ' đ'">35,600 đ</span>
+              </div>
+              <div th:if="${latestOrder.discount != null and latestOrder.discount > 0}" style="display: flex; justify-content: space-between; margin-bottom: 4px; color: #2e6830;">
+                <span>Giảm giá thành viên:</span>
+                <span style="font-family: var(--serif);" th:text="'-' + ${#numbers.formatDecimal(latestOrder.discount, 0, 'COMMA', 0, 'POINT')} + ' đ'">-0 đ</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: baseline; border-top: 1px dashed var(--line); padding-top: 8px; margin-top: 6px;">
+                <span style="font-weight: bold; font-size: 14px;">Tổng thanh toán:</span>
+                <span style="color: var(--gold-dark); font-family: var(--serif); font-size: 20px; font-weight: bold;" 
+                      th:text="${#numbers.formatDecimal(latestOrder.totalAmount, 0, 'COMMA', 0, 'POINT')} + ' đ'">
+                  480,600 đ
+                </span>
+              </div>
+            </div>
+
+            <!-- Nút hành động -->
+            <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--line); padding-top: 12px;">
+              <a th:href="@{'/my-orders/' + ${latestOrder.id}}" style="font-size: 12px; color: var(--gold-dark); text-decoration: underline; font-weight: 600;">
+                Xem hóa đơn chi tiết &amp; In ↗
+              </a>
+              <a th:href="@{/menu}" class="btn-add-cart" style="font-size: 11px;">
+                Đặt món mới
+              </a>
+            </div>
+
           </div>
 
-          <div th:if="${recentOrders == null or #lists.isEmpty(recentOrders)}" style="background: white; border: 1px dashed var(--line); padding: 25px; text-align: center; border-radius: 4px;">
-            <p style="color: var(--muted); margin: 0 0 10px;">Quý khách chưa có đơn đặt món nào.</p>
-            <a th:href="@{/menu}" class="button-gold" style="font-size: 10px; padding: 10px 16px;">Đặt món ngay</a>
+          <!-- Trạng thái trống nếu chưa có đơn -->
+          <div th:if="${latestOrder == null}" style="background: white; border: 1px dashed var(--line); padding: 35px 20px; text-align: center; border-radius: 4px;">
+            <p style="color: var(--muted); margin: 0 0 12px;">Quý khách chưa có đơn đặt món nào.</p>
+            <a th:href="@{/menu}" class="button-gold" style="font-size: 10px; padding: 10px 18px;">Đặt món ngay</a>
           </div>
         </div>
 

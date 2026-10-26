@@ -10,9 +10,11 @@ import jakarta.servlet.http.HttpSession;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.List;
+import java.util.Optional;
 
 @Controller
 public class CustomerAccountController {
@@ -50,6 +52,7 @@ public class CustomerAccountController {
         model.addAttribute("orderCount", recentOrders.size());
         model.addAttribute("reservationCount", recentReservations.size());
         model.addAttribute("recentOrders", recentOrders.stream().limit(3).toList());
+        model.addAttribute("latestOrder", recentOrders.isEmpty() ? null : recentOrders.get(0));
         model.addAttribute("recentReservations", recentReservations.stream().limit(3).toList());
 
         return "account/profile";
@@ -69,6 +72,30 @@ public class CustomerAccountController {
         model.addAttribute("orders", orders);
 
         return "account/my-orders";
+    }
+
+    @GetMapping("/my-orders/{id}")
+    public String showOrderDetail(@PathVariable("id") Long id,
+                                  Model model,
+                                  HttpSession session,
+                                  RedirectAttributes redirectAttributes) {
+        Customer customer = (Customer) session.getAttribute("loggedInCustomer");
+        if (customer == null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Vui lòng đăng nhập để xem chi tiết đơn hàng!");
+            return "redirect:/login?redirect=/my-orders/" + id;
+        }
+
+        Optional<Order> orderOpt = orderService.getOrderById(id);
+        if (orderOpt.isEmpty() || !orderOpt.get().getCustomerId().equals(customer.getId())) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Không tìm thấy đơn hàng hoặc bạn không có quyền xem đơn này!");
+            return "redirect:/my-orders";
+        }
+
+        model.addAttribute("activePage", "account");
+        model.addAttribute("pageTitle", "Chi tiết đơn hàng #" + orderOpt.get().getOrderCode() + " | GoD Fine Dining");
+        model.addAttribute("order", orderOpt.get());
+
+        return "account/order-detail";
     }
 
     @GetMapping("/my-reservations")
