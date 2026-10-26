@@ -3,8 +3,123 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title th:text="${pageTitle}">Quản Lý Kho Nguyên Liệu | GoD Admin</title>
+  <title th:text="${pageTitle}">Quản Lý Kho Nguyên Vật Liệu | GoD Admin</title>
   <link rel="stylesheet" href="/css/admin.css">
+  <style>
+    .inventory-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 24px;
+      border-bottom: 1px solid var(--admin-line);
+      padding-bottom: 8px;
+      overflow-x: auto;
+    }
+    .inventory-tab-btn {
+      padding: 10px 20px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--admin-text-muted);
+      text-decoration: none;
+      background: #fff;
+      border: 1px solid var(--admin-line);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all .15s ease;
+      white-space: nowrap;
+    }
+    .inventory-tab-btn:hover {
+      background: #fbf9f5;
+      color: var(--admin-text);
+      border-color: #d1c9bd;
+    }
+    .inventory-tab-btn.active {
+      background: var(--admin-sidebar-bg);
+      color: #fff;
+      border-color: var(--admin-sidebar-bg);
+    }
+    .inventory-tab-btn.active .tab-badge {
+      background: var(--admin-gold);
+      color: #fff;
+    }
+    .tab-badge {
+      background: #eee;
+      color: #555;
+      font-size: 11px;
+      padding: 2px 7px;
+      border-radius: 12px;
+      font-weight: bold;
+    }
+    .tab-badge.danger {
+      background: #fed7d7;
+      color: #9b2c2c;
+    }
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.55);
+      z-index: 1000;
+      overflow-y: auto;
+      padding: 30px 15px;
+    }
+    .modal-container {
+      background: white;
+      width: min(540px, 100%);
+      margin: 40px auto;
+      padding: 28px;
+      border-radius: 8px;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.25);
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #eee;
+    }
+    .modal-header h3 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--admin-text);
+    }
+    .form-group {
+      margin-bottom: 16px;
+    }
+    .form-label {
+      display: block;
+      font-size: 11px;
+      text-transform: uppercase;
+      font-weight: 700;
+      letter-spacing: .06em;
+      margin-bottom: 6px;
+      color: #555;
+    }
+    .form-input, .form-select, .form-textarea {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 13px;
+      font-family: inherit;
+    }
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
+      outline: none;
+      border-color: var(--admin-gold);
+      box-shadow: 0 0 0 2px rgba(185, 149, 91, 0.2);
+    }
+    .kpi-warning-card {
+      background: #fffdf5;
+      border-left: 4px solid #dd6b20;
+    }
+    .kpi-danger-card {
+      background: #fff8f8;
+      border-left: 4px solid #e53e3e;
+    }
+  </style>
 </head>
 <body class="admin-body">
 
@@ -13,123 +128,1039 @@
 
   <div class="admin-main">
     <header class="admin-topbar">
-      <h1>Quản Lý Kho Nguyên Vật Liệu</h1>
-      <button onclick="document.getElementById('addIngModal').style.display='block'" class="btn-gold">
-        + Thêm Nguyên Liệu Mới
-      </button>
+      <div>
+        <h1 style="display: flex; align-items: center; gap: 10px;">
+          <span>Quản Lý Kho &amp; Vật Tư</span>
+          <span style="font-size: 12px; background: #e2e8f0; color: #4a5568; padding: 2px 8px; border-radius: 12px; font-weight: normal;">Thủ Kho</span>
+        </h1>
+        <div style="font-size: 12px; color: var(--admin-text-muted); margin-top: 3px;">
+          Nhập xuất hàng hóa, kiểm kê tồn kho và liên kết bếp chế biến
+        </div>
+      </div>
+      <div style="display: flex; gap: 8px;">
+        <button onclick="openModal('createReceiptModal')" class="btn-gold">
+           + Nhập Kho (Phiếu Nhập)
+        </button>
+        <button onclick="openModal('exportModal')" class="btn-sm" style="padding: 8px 14px; font-weight: 600; background: #fff;">
+           Xuất Kho / Hao Hụt
+        </button>
+        <button onclick="openModal('addIngModal')" class="btn-sm" style="padding: 8px 14px; font-weight: 600; background: #fff;">
+          + Thêm Nguyên Liệu
+        </button>
+      </div>
     </header>
 
     <div class="admin-content">
 
-      <div th:if="${successMessage}" style="background: #edf7ed; color: #1e4620; padding: 14px 18px; border-radius: 4px; margin-bottom: 25px; border: 1px solid #c2e2c4;">
+      <!-- Alerts -->
+      <div th:if="${successMessage}" style="background: #edf7ed; color: #1e4620; padding: 14px 18px; border-radius: 6px; margin-bottom: 22px; border: 1px solid #c2e2c4; display: flex; align-items: center; gap: 10px;">
+        <span style="font-size: 18px;">✓</span>
         <span th:text="${successMessage}"></span>
       </div>
-      <div th:if="${errorMessage}" style="background: #fdf2f2; color: #9b2c2c; padding: 14px 18px; border-radius: 4px; margin-bottom: 25px; border: 1px solid #fed7d7;">
+      <div th:if="${errorMessage}" style="background: #fdf2f2; color: #9b2c2c; padding: 14px 18px; border-radius: 6px; margin-bottom: 22px; border: 1px solid #fed7d7; display: flex; align-items: center; gap: 10px;">
+        <span style="font-size: 18px;"></span>
         <span th:text="${errorMessage}"></span>
       </div>
 
-      <!-- Cảnh báo nếu có nguyên liệu sắp hết -->
-      <div th:if="${lowStockCount > 0}" style="background: #fff3cd; color: #856404; padding: 14px 18px; border-radius: 4px; margin-bottom: 25px; border: 1px solid #ffeeba; display: flex; align-items: center; gap: 10px;">
-        <span style="font-size: 20px;">⚠️</span>
-        <span>Có <strong th:text="${lowStockCount}">1</strong> nguyên liệu đang ở mức tồn kho tối thiểu hoặc sắp hết! Vui lòng lập phiếu nhập thêm từ nhà cung cấp.</span>
-      </div>
-
-      <div class="admin-card">
-        <div class="admin-card-header">
-          <h2>Danh Sách Nguyên Vật Liệu Tồn Kho</h2>
-          <span style="font-size: 13px; color: var(--admin-text-muted);" th:text="'Tổng số: ' + ${ingredients.size()} + ' nguyên liệu'"></span>
+      <!-- KPI Summary Cards -->
+      <div class="admin-kpi-grid">
+        <div class="admin-kpi-card">
+          <span class="admin-kpi-title">Tổng Loại Nguyên Liệu</span>
+          <div class="admin-kpi-val" th:text="${ingredients.size()}">6</div>
+          <div style="font-size: 12px; color: var(--admin-text-muted);">Đang theo dõi trong danh mục</div>
         </div>
 
-        <table class="admin-table">
-          <thead>
-            <tr>
-              <th>Mã NL</th>
-              <th>Tên nguyên liệu</th>
-              <th>Đơn vị tính</th>
-              <th>Tồn kho thực tế</th>
-              <th>Ngưỡng tối thiểu</th>
-              <th>Giá vốn ước tính</th>
-              <th>Tình trạng tồn</th>
-              <th style="text-align: right;">Cập nhật tồn kho</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr th:each="ing : ${ingredients}">
-              <td><strong th:text="${ing.code}" style="font-family: monospace; color: var(--admin-gold);">ING-001</strong></td>
-              <td><strong th:text="${ing.name}">Thịt bò Wagyu</strong></td>
-              <td th:text="${ing.unit}">kg</td>
-              <td style="font-weight: bold; font-size: 15px;" th:text="${ing.stockQuantity}">25.5</td>
-              <td style="color: var(--admin-text-muted);" th:text="${ing.minStockLevel}">5.0</td>
-              <td style="font-family: 'Playfair Display', 'Times New Roman', serif;" th:text="${#numbers.formatDecimal(ing.costPrice, 0, 'COMMA', 0, 'POINT')} + ' đ'">450,000 đ</td>
-              <td>
-                <span class="badge-status" 
-                      th:classappend="${ing.lowStock ? 'status-cancelled' : 'status-completed'}"
-                      th:text="${ing.lowStock ? '⚠️ Sắp hết hàng' : '✓ Đủ tồn kho'}">Đủ tồn kho</span>
-              </td>
-              <td style="text-align: right;">
-                <form th:action="@{/admin/inventory/update}" method="post" style="display: inline-flex; gap: 6px; align-items: center;">
-                  <input type="hidden" name="id" th:value="${ing.id}">
-                  <input type="number" step="0.1" name="stockQuantity" th:value="${ing.stockQuantity}" style="width: 70px; padding: 4px; border: 1px solid #ccc; border-radius: 3px; font-size: 12px; text-align: center;">
-                  <button type="submit" class="btn-sm btn-gold" style="font-size: 11px;">Lưu</button>
-                </form>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+        <div class="admin-kpi-card" th:classappend="${lowStockCount > 0 ? 'kpi-danger-card' : ''}">
+          <span class="admin-kpi-title" style="display: flex; justify-content: space-between;">
+            <span>Cảnh Báo Sắp Hết</span>
+            <span th:if="${lowStockCount > 0}" style="color: #e53e3e; font-weight: bold;">CẦN NHẬP</span>
+          </span>
+          <div class="admin-kpi-val" th:style="${lowStockCount > 0 ? 'color: #e53e3e;' : ''}" th:text="${lowStockCount}">0</div>
+          <div style="font-size: 12px; color: var(--admin-text-muted);">Tồn &le; định mức tối thiểu</div>
+        </div>
+
+        <div class="admin-kpi-card">
+          <span class="admin-kpi-title">Tổng Giá Trị Tồn Kho</span>
+          <div class="admin-kpi-val" style="font-size: 22px; color: var(--admin-gold);" th:text="${formattedTotalStockValue}">0 đ</div>
+          <div style="font-size: 12px; color: var(--admin-text-muted);">Định giá theo giá vốn hiện hành</div>
+        </div>
+
+        <div class="admin-kpi-card">
+          <span class="admin-kpi-title">Phiếu Nhập Tháng Này</span>
+          <div class="admin-kpi-val" th:text="${receiptsCountThisMonth}">1</div>
+          <div style="font-size: 12px; color: var(--admin-text-muted);">Lô hàng đã nhập kho thành công</div>
+        </div>
+      </div>
+
+      <!-- Cảnh báo nếu có nguyên liệu sắp hết -->
+      <div th:if="${lowStockCount > 0}" style="background: #fff8eb; color: #b7791f; padding: 14px 18px; border-radius: 6px; margin-bottom: 22px; border: 1px solid #feebc8; display: flex; align-items: center; justify-content: space-between;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span style="font-size: 22px;"></span>
+          <span>Có <strong th:text="${lowStockCount}">1</strong> nguyên liệu đang ở mức báo động hoặc sắp hết! Cần lập phiếu nhập hàng.</span>
+        </div>
+        <div style="display: flex; gap: 8px;">
+          <a th:href="@{/admin/inventory(tab='stock', filter='low')}" class="btn-sm" style="background: #fff; font-weight: 600;">Xem chi tiết</a>
+          <button onclick="openModal('createReceiptModal')" class="btn-gold" style="padding: 6px 12px;">+ Lập phiếu nhập ngay</button>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <div class="inventory-tabs">
+        <a th:href="@{/admin/inventory(tab='stock')}" 
+           class="inventory-tab-btn" 
+           th:classappend="${currentTab == 'stock' || currentTab == null} ? 'active' : ''">
+          <span> Tồn Kho &amp; Định Mức</span>
+          <span class="tab-badge" th:text="${ingredients.size()}">6</span>
+          <span th:if="${lowStockCount > 0}" class="tab-badge danger" th:text="${lowStockCount} + ' sắp hết'">1 sắp hết</span>
+        </a>
+
+        <a th:href="@{/admin/inventory(tab='receipts')}" 
+           class="inventory-tab-btn" 
+           th:classappend="${currentTab == 'receipts'} ? 'active' : ''">
+          <span> Nhập Kho (Phiếu Nhập)</span>
+          <span class="tab-badge" th:text="${receipts.size()}">1</span>
+        </a>
+
+        <a th:href="@{/admin/inventory(tab='export')}" 
+           class="inventory-tab-btn" 
+           th:classappend="${currentTab == 'export'} ? 'active' : ''">
+          <span> Xuất Kho &amp; Hao Hụt</span>
+        </a>
+
+        <a th:href="@{/admin/inventory(tab='suppliers')}" 
+           class="inventory-tab-btn" 
+           th:classappend="${currentTab == 'suppliers'} ? 'active' : ''">
+          <span> Nhà Cung Cấp</span>
+          <span class="tab-badge" th:text="${suppliers.size()}">3</span>
+        </a>
+
+        <a th:href="@{/admin/inventory(tab='history')}" 
+           class="inventory-tab-btn" 
+           th:classappend="${currentTab == 'history'} ? 'active' : ''">
+          <span> Lịch Sử Biến Động</span>
+          <span class="tab-badge" th:text="${transactions.size()}">3</span>
+        </a>
+      </div>
+
+      <!-- ==================== TAB 1: TỒN KHO & ĐỊNH MỨC ==================== -->
+      <div th:if="${currentTab == 'stock' || currentTab == null}">
+        <div class="admin-card">
+          <div class="admin-card-header" style="flex-wrap: wrap; gap: 12px;">
+            <div style="display: flex; align-items: center; gap: 14px;">
+              <h2>Danh Mục Nguyên Vật Liệu Trong Kho</h2>
+              <span style="font-size: 13px; color: var(--admin-text-muted);" th:text="'Tổng số: ' + ${ingredients.size()} + ' mặt hàng'"></span>
+            </div>
+            
+            <div style="display: flex; gap: 10px; align-items: center;">
+              <!-- Quick Search Input -->
+              <input type="text" id="ingSearchInput" onkeyup="filterIngredientTable()" placeholder=" Tìm mã hoặc tên nguyên liệu..." 
+                     style="padding: 7px 12px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; width: 250px;">
+
+              <!-- Filter buttons -->
+              <a th:href="@{/admin/inventory(tab='stock')}" 
+                 class="btn-sm" 
+                 th:style="${currentFilter == null || currentFilter == ''} ? 'background: #333; color: #fff;' : 'background: #fff;'">
+                Tất cả
+              </a>
+              <a th:href="@{/admin/inventory(tab='stock', filter='low')}" 
+                 class="btn-sm" 
+                 th:style="${currentFilter == 'low'} ? 'background: #e53e3e; color: #fff;' : 'background: #fff; color: #e53e3e; border-color: #feb2b2;'">
+                 Sắp hết (<span th:text="${lowStockCount}">0</span>)
+              </a>
+            </div>
+          </div>
+
+          <table class="admin-table" id="ingredientTable">
+            <thead>
+              <tr>
+                <th>Mã NL</th>
+                <th>Tên nguyên liệu</th>
+                <th>Đơn vị</th>
+                <th>Tồn thực tế</th>
+                <th>Ngưỡng tối thiểu</th>
+                <th>Giá vốn gần nhất</th>
+                <th>Tình trạng tồn</th>
+                <th style="text-align: right;">Thao tác nhanh</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr th:each="ing : ${ingredients}" 
+                  th:if="${currentFilter != 'low' || ing.isLowStock()}">
+                <td>
+                  <strong th:text="${ing.code}" style="font-family: monospace; color: var(--admin-gold);">ING-001</strong>
+                </td>
+                <td>
+                  <strong th:text="${ing.name}" style="font-size: 14px;">Thịt bò Wagyu</strong>
+                </td>
+                <td>
+                  <span style="background: #edf2f7; padding: 2px 8px; border-radius: 4px; font-size: 12px;" th:text="${ing.unit}">kg</span>
+                </td>
+                <td>
+                  <span style="font-weight: 700; font-size: 15px;" 
+                        th:style="${ing.isLowStock() ? 'color: #e53e3e;' : 'color: #2c2724;'}"
+                        th:text="${ing.formattedStockQuantity}">25.5</span>
+                  <span th:text="' ' + ${ing.unit}" style="font-size: 12px; color: var(--admin-text-muted);"></span>
+                </td>
+                <td style="color: var(--admin-text-muted);" th:text="${ing.formattedMinStockLevel} + ' ' + ${ing.unit}">5.0 kg</td>
+                <td style="font-weight: 500;" th:text="${ing.formattedCostPrice}">450,000 đ</td>
+                <td>
+                  <span class="badge-status" 
+                        th:classappend="${ing.isLowStock() ? 'status-cancelled' : 'status-completed'}"
+                        th:text="${ing.isLowStock() ? ' Sắp hết hàng' : '✓ Đủ tồn kho'}">Đủ tồn kho</span>
+                </td>
+                <td style="text-align: right;">
+                  <div style="display: inline-flex; gap: 6px; align-items: center;">
+                    <!-- Nút mở modal nhập nhanh cho món này -->
+                    <button type="button" 
+                            th:onclick="'prefillReceipt(' + ${ing.id} + ', ' + ${ing.costPrice} + ')'"
+                            class="btn-sm" style="background: #edf7ed; color: #1e4620; border-color: #c2e2c4;" title="Nhập thêm hàng">
+                      + Nhập
+                    </button>
+                    <!-- Nút mở modal xuất nhanh món này -->
+                    <button type="button" 
+                            th:onclick="'prefillExport(' + ${ing.id} + ')'"
+                            class="btn-sm" style="background: #fdf2f2; color: #9b2c2c; border-color: #fed7d7;" title="Xuất kho cho bếp">
+                      - Xuất
+                    </button>
+                    <!-- Form sửa số lượng trực tiếp -->
+                    <form th:action="@{/admin/inventory/update}" method="post" style="display: inline-flex; gap: 4px; align-items: center; margin-left: 6px;">
+                      <input type="hidden" name="id" th:value="${ing.id}">
+                      <input type="number" step="0.001" name="stockQuantity" th:value="${ing.stockQuantity}" 
+                             style="width: 72px; padding: 4px; border: 1px solid #ccc; border-radius: 3px; font-size: 12px; text-align: center;">
+                      <button type="submit" class="btn-sm btn-gold" style="font-size: 11px;">Lưu</button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ==================== TAB 2: NHẬP KHO (CHI TIẾT MẶT HÀNG ĐÃ NHẬP) ==================== -->
+      <div th:if="${currentTab == 'receipts'}">
+        <div class="admin-card">
+          <div class="admin-card-header" style="flex-wrap: wrap; gap: 12px;">
+            <div>
+              <h2>Quản Lý Nhập Kho &amp; Chi Tiết Mặt Hàng Đã Nhập</h2>
+              <span style="font-size: 13px; color: var(--admin-text-muted);">
+                Theo dõi tường minh từng phiếu nhập và danh sách chi tiết các nguyên liệu, số lượng, giá vốn và hạn sử dụng
+              </span>
+            </div>
+            
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <!-- View mode toggle buttons -->
+              <div style="display: inline-flex; background: #eee; padding: 3px; border-radius: 6px;">
+                <button type="button" id="btnViewReceipts" onclick="switchReceiptView('byReceipt')" 
+                        style="padding: 6px 14px; border: none; border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer; background: var(--admin-sidebar-bg); color: #fff;">
+                   Theo Phiếu Nhập (<span th:text="${receipts.size()}">5</span>)
+                </button>
+                <button type="button" id="btnViewItems" onclick="switchReceiptView('byItems')" 
+                        style="padding: 6px 14px; border: none; border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer; background: transparent; color: #555;">
+                   Chi Tiết Từng Mặt Hàng (<span th:text="${receiptItems.size()}">12</span>)
+                </button>
+              </div>
+
+              <button onclick="openModal('createReceiptModal')" class="btn-gold" style="padding: 8px 16px;">
+                + Tạo Phiếu Nhập Kho Mới
+              </button>
+            </div>
+          </div>
+
+          <!-- VIEW 1: THEO PHIẾU NHẬP (CÓ ACCORDION XỔ CHI TIẾT MẶT HÀNG) -->
+          <div id="viewByReceipt">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th style="width: 40px;"></th>
+                  <th>Mã phiếu</th>
+                  <th>Nhà cung cấp</th>
+                  <th>Nhân viên tiếp nhận</th>
+                  <th>Số mặt hàng</th>
+                  <th>Tổng tiền hóa đơn</th>
+                  <th>Thời gian nhập</th>
+                  <th>Trạng thái</th>
+                  <th style="text-align: right;">Hành động</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr th:if="${receipts.isEmpty()}">
+                  <td colspan="9" style="text-align: center; padding: 30px; color: var(--admin-text-muted);">
+                    Chưa có phiếu nhập kho nào được tạo.
+                  </td>
+                </tr>
+
+                <!-- Loop through each receipt -->
+                <th:block th:each="r : ${receipts}">
+                  <tr style="cursor: pointer;" th:onclick="'toggleReceiptDetail(' + ${r.id} + ')'" title="Bấm để xem/ẩn chi tiết mặt hàng trong phiếu">
+                    <td style="text-align: center; color: var(--admin-gold); font-size: 14px;">
+                      <span th:id="'arrow-' + ${r.id}">▶</span>
+                    </td>
+                    <td>
+                      <strong th:text="${r.receiptCode}" style="font-family: monospace; color: var(--admin-gold); font-size: 13px;">PNK-20261020-001</strong>
+                      <div th:if="${r.note != null and !r.note.isEmpty()}" style="font-size: 11px; color: var(--admin-text-muted);" th:text="${r.note}"></div>
+                    </td>
+                    <td>
+                      <strong th:text="${r.supplierName}">Công ty Thực phẩm Sạch</strong>
+                    </td>
+                    <td th:text="${r.createdByName != null ? r.createdByName : 'Thủ kho'}">Vũ Thủ Kho</td>
+                    <td>
+                      <span style="background: #edf2f7; color: #2d3748; padding: 3px 8px; border-radius: 12px; font-size: 12px; font-weight: bold;" 
+                            th:text="${r.items.size()} + ' mặt hàng'">1 mặt hàng</span>
+                    </td>
+                    <td>
+                      <strong style="color: #2c2724; font-family: 'Playfair Display', serif; font-size: 14px;" th:text="${r.formattedTotalCost}">11,475,000 đ</strong>
+                    </td>
+                    <td th:text="${r.formattedCreatedAt}">23/10/2026 15:46</td>
+                    <td>
+                      <span class="badge-status status-completed">✓ ĐÃ NHẬP KHO</span>
+                    </td>
+                    <td style="text-align: right;" onclick="event.stopPropagation()">
+                      <button type="button" 
+                              th:onclick="'toggleReceiptDetail(' + ${r.id} + ')'"
+                              class="btn-sm" style="background: #fbf9f5; border-color: #d1c9bd; font-weight: 600;">
+                         Chi tiết (<span th:text="${r.items.size()}">1</span>)
+                      </button>
+                    </td>
+                  </tr>
+
+                  <!-- Accordion Row: Chi tiết các nguyên liệu trong phiếu nhập này -->
+                  <tr th:id="'receipt-items-' + ${r.id}" style="display: none; background: #faf8f5;">
+                    <td colspan="9" style="padding: 16px 24px; border-bottom: 2px solid var(--admin-line);">
+                      <div style="background: #ffffff; border: 1px solid var(--admin-line); border-radius: 6px; padding: 16px; box-shadow: inset 0 1px 3px rgba(0,0,0,0.03);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px dashed var(--admin-line);">
+                          <div style="font-size: 13px; font-weight: bold; color: var(--admin-text); display: flex; align-items: center; gap: 8px;">
+                            <span> Chi Tiết Hàng Hóa Của Phiếu:</span>
+                            <span style="font-family: monospace; color: var(--admin-gold);" th:text="${r.receiptCode}">PNK-20261020-001</span>
+                            <span style="font-weight: normal; color: var(--admin-text-muted); font-size: 12px;" th:text="'(Nhà cung cấp: ' + ${r.supplierName} + ')'"></span>
+                          </div>
+                          <div style="font-size: 12px; color: var(--admin-text-muted);" th:text="'Ngày lập: ' + ${r.formattedCreatedAt}"></div>
+                        </div>
+
+                        <!-- Table of items inside this receipt -->
+                        <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+                          <thead>
+                            <tr style="background: #fbf9f5; border-bottom: 1px solid #eee; text-align: left; color: var(--admin-text-muted); font-size: 11px; text-transform: uppercase;">
+                              <th style="padding: 8px 12px;">#</th>
+                              <th style="padding: 8px 12px;">Mã NL</th>
+                              <th style="padding: 8px 12px;">Tên nguyên vật liệu</th>
+                              <th style="padding: 8px 12px;">ĐVT</th>
+                              <th style="padding: 8px 12px; text-align: right;">Số lượng nhập</th>
+                              <th style="padding: 8px 12px; text-align: right;">Đơn giá nhập</th>
+                              <th style="padding: 8px 12px; text-align: right;">Thành tiền</th>
+                              <th style="padding: 8px 12px; text-align: center;">Hạn sử dụng (HSD)</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr th:if="${r.items.isEmpty()}">
+                              <td colspan="8" style="text-align: center; padding: 12px; color: var(--admin-text-muted);">
+                                Không có chi tiết mặt hàng cho phiếu này.
+                              </td>
+                            </tr>
+                            <tr th:each="it, itStat : ${r.items}" style="border-bottom: 1px solid #f5f2eb;">
+                              <td style="padding: 8px 12px; color: var(--admin-text-muted);" th:text="${itStat.count}">1</td>
+                              <td style="padding: 8px 12px;">
+                                <strong style="font-family: monospace; color: var(--admin-gold);" th:text="${it.ingredientCode}">ING-001</strong>
+                              </td>
+                              <td style="padding: 8px 12px;">
+                                <strong th:text="${it.ingredientName}">Thịt bò Wagyu</strong>
+                              </td>
+                              <td style="padding: 8px 12px;">
+                                <span style="background: #f0f4f8; padding: 2px 6px; border-radius: 3px;" th:text="${it.unit}">kg</span>
+                              </td>
+                              <td style="padding: 8px 12px; text-align: right; font-weight: bold; font-size: 13px;" th:text="${it.formattedQuantity}">
+                                25.500
+                              </td>
+                              <td style="padding: 8px 12px; text-align: right;" th:text="${it.formattedUnitPrice}">
+                                450,000 đ
+                              </td>
+                              <td style="padding: 8px 12px; text-align: right; font-weight: bold; color: #2c2724; font-family: 'Playfair Display', serif;" th:text="${it.formattedTotalPrice}">
+                                11,475,000 đ
+                              </td>
+                              <td style="padding: 8px 12px; text-align: center;">
+                                <span style="background: #edf7ed; color: #1e4620; padding: 2px 8px; border-radius: 4px; font-size: 11px;" 
+                                      th:text="${it.formattedExpiryDate}">20/11/2026</span>
+                              </td>
+                            </tr>
+                          </tbody>
+                          <tfoot>
+                            <tr style="background: #fdfbf7; font-weight: bold; border-top: 1px solid var(--admin-line);">
+                              <td colspan="6" style="padding: 10px 12px; text-align: right; text-transform: uppercase; font-size: 11px;">Tổng cộng tiền phiếu:</td>
+                              <td style="padding: 10px 12px; text-align: right; font-size: 14px; color: var(--admin-gold); font-family: 'Playfair Display', serif;" th:text="${r.formattedTotalCost}">11,475,000 đ</td>
+                              <td></td>
+                            </tr>
+                          </tfoot>
+                        </table>
+                      </div>
+                    </td>
+                  </tr>
+                </th:block>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- VIEW 2: BẢNG TỔNG HỢP TOÀN BỘ MẶT HÀNG ĐÃ NHẬP (TƯỜNG MINH CHI TIẾT) -->
+          <div id="viewByItems" style="display: none;">
+            <div style="padding: 12px 18px; background: #fbf9f5; border-bottom: 1px solid var(--admin-line); display: flex; justify-content: space-between; align-items: center;">
+              <div style="font-size: 12px; color: var(--admin-text-muted);">
+                Liệt kê chi tiết toàn bộ các mặt hàng thực phẩm &amp; vật tư đã tiếp nhận từ các đối tác cung ứng
+              </div>
+              <input type="text" id="receiptItemSearchInput" onkeyup="filterReceiptItemTable()" placeholder="🔍 Tìm mặt hàng hoặc nhà cung cấp..." 
+                     style="padding: 6px 12px; border: 1px solid #ccc; border-radius: 4px; font-size: 12px; width: 260px;">
+            </div>
+
+            <table class="admin-table" id="receiptItemsTable">
+              <thead>
+                <tr>
+                  <th>Thời gian tiếp nhận</th>
+                  <th>Mã phiếu</th>
+                  <th>Nhà cung cấp</th>
+                  <th>Mã NL</th>
+                  <th>Tên nguyên vật liệu</th>
+                  <th>ĐVT</th>
+                  <th style="text-align: right;">Số lượng</th>
+                  <th style="text-align: right;">Đơn giá nhập</th>
+                  <th style="text-align: right;">Thành tiền</th>
+                  <th style="text-align: center;">Hạn sử dụng</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr th:if="${receiptItems.isEmpty()}">
+                  <td colspan="10" style="text-align: center; padding: 30px; color: var(--admin-text-muted);">
+                    Chưa có dữ liệu mặt hàng nào được ghi nhận.
+                  </td>
+                </tr>
+                <tr th:each="it : ${receiptItems}">
+                  <td th:text="${it.formattedReceivedAt}">23/10/2026 09:30</td>
+                  <td>
+                    <strong th:text="${it.receiptCode}" style="font-family: monospace; color: var(--admin-gold); font-size: 12px;">PNK-20261020-001</strong>
+                  </td>
+                  <td>
+                    <strong th:text="${it.supplierName}">Hoàng Gia Food</strong>
+                  </td>
+                  <td>
+                    <span style="font-family: monospace; font-size: 11px; background: #edf2f7; padding: 2px 6px; border-radius: 3px;" th:text="${it.ingredientCode}">ING-001</span>
+                  </td>
+                  <td>
+                    <strong style="font-size: 13px;" th:text="${it.ingredientName}">Thịt bò Wagyu</strong>
+                  </td>
+                  <td th:text="${it.unit}">kg</td>
+                  <td style="text-align: right; font-weight: bold; font-size: 13px; color: #2f855a;" th:text="'+' + ${it.formattedQuantity}">
+                    +25.500
+                  </td>
+                  <td style="text-align: right;" th:text="${it.formattedUnitPrice}">
+                    450,000 đ
+                  </td>
+                  <td style="text-align: right; font-weight: bold; font-family: 'Playfair Display', serif;" th:text="${it.formattedTotalPrice}">
+                    11,475,000 đ
+                  </td>
+                  <td style="text-align: center;">
+                    <span style="background: #edf7ed; color: #1e4620; padding: 2px 8px; border-radius: 4px; font-size: 11px;" 
+                          th:text="${it.formattedExpiryDate}">20/11/2026</span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ==================== TAB 3: XUẤT KHO & HAO HỤT ==================== -->
+      <div th:if="${currentTab == 'export'}">
+        <div style="display: grid; grid-template-columns: 360px 1fr; gap: 24px; align-items: start;">
+          <!-- Left: Direct Export Card -->
+          <div class="admin-card">
+            <div class="admin-card-header">
+              <h2>Lập Lệnh Xuất Kho / Báo Hỏng</h2>
+            </div>
+            <div style="padding: 20px;">
+              <form th:action="@{/admin/inventory/export-stock}" method="post">
+                <div class="form-group">
+                  <label class="form-label">Loại Nghiệp Vụ *</label>
+                  <select name="transactionType" class="form-select" required>
+                    <option value="EXPORT_KITCHEN"> Xuất cho Bếp Chế Biến</option>
+                    <option value="SPOILAGE"> Báo Hỏng / Hao Hụt Sơ Chế</option>
+                    <option value="ADJUSTMENT"> Kiểm Kê Điều Chỉnh Giảm</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Chọn Nguyên Liệu Xuất *</label>
+                  <select name="ingredientId" id="exportDirectSelect" class="form-select" required onchange="updateStockNotice(this)">
+                    <option value="">-- Chọn nguyên liệu --</option>
+                    <option th:each="ing : ${ingredients}" 
+                            th:value="${ing.id}" 
+                            th:data-stock="${ing.stockQuantity}"
+                            th:data-unit="${ing.unit}"
+                            th:text="${ing.code} + ' - ' + ${ing.name} + ' (Tồn: ' + ${ing.formattedStockQuantity} + ' ' + ${ing.unit} + ')'">
+                    </option>
+                  </select>
+                  <div id="exportStockNotice" style="font-size: 11px; color: var(--admin-gold); margin-top: 4px; font-weight: 600;"></div>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Số Lượng Xuất *</label>
+                  <input type="number" step="0.001" min="0.001" name="quantity" required placeholder="Ví dụ: 2.5" class="form-input">
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Lý Do / Ghi Chú</label>
+                  <textarea name="note" rows="3" class="form-textarea" placeholder="Ví dụ: Xuất cho ca tối Bếp trưởng, hoặc rách bao bì..."></textarea>
+                </div>
+
+                <button type="submit" class="btn-gold" style="width: 100%; justify-content: center; padding: 12px;">
+                  Xác Nhận Xuất Kho
+                </button>
+              </form>
+            </div>
+          </div>
+
+          <!-- Right: Recent Export History Table -->
+          <div class="admin-card">
+            <div class="admin-card-header">
+              <h2>Các Lệnh Xuất Kho &amp; Hao Hụt Gần Đây</h2>
+              <span style="font-size: 13px; color: var(--admin-text-muted);">Trích xuất từ nhật ký vận hành kho</span>
+            </div>
+
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Thời gian</th>
+                  <th>Nguyên liệu</th>
+                  <th>Nghiệp vụ</th>
+                  <th>Số lượng</th>
+                  <th>Tồn sau xuất</th>
+                  <th>Người thao tác</th>
+                  <th>Lý do / Ghi chú</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr th:each="tx : ${transactions}" 
+                    th:if="${tx.transactionType == 'EXPORT_KITCHEN' || tx.transactionType == 'SPOILAGE' || tx.transactionType == 'ADJUSTMENT'}">
+                  <td th:text="${tx.formattedCreatedAt}">25/10/2026 15:46</td>
+                  <td>
+                    <strong th:text="${tx.ingredientName}">Thịt bò Wagyu</strong>
+                    <div style="font-size: 11px; color: var(--admin-text-muted);" th:text="${tx.ingredientCode}">ING-001</div>
+                  </td>
+                  <td>
+                    <span class="badge-status" 
+                          th:classappend="${tx.transactionBadgeClass}"
+                          th:text="${tx.transactionTypeName}">Xuất cho Bếp</span>
+                  </td>
+                  <td>
+                    <strong style="color: #e53e3e;" th:text="${tx.quantity} + ' ' + ${tx.unit}">-2.000 kg</strong>
+                  </td>
+                  <td th:text="${tx.balanceAfter} + ' ' + ${tx.unit}">23.500 kg</td>
+                  <td th:text="${tx.employeeName != null ? tx.employeeName : 'Thủ kho'}">Vũ Thủ Kho</td>
+                  <td style="color: var(--admin-text-muted);" th:text="${tx.note}">Xuất cho bếp trưởng</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== TAB 4: NHÀ CUNG CẤP ==================== -->
+      <div th:if="${currentTab == 'suppliers'}">
+        <div class="admin-card">
+          <div class="admin-card-header">
+            <div>
+              <h2>Danh Sách Đối Tác &amp; Nhà Cung Cấp</h2>
+              <span style="font-size: 13px; color: var(--admin-text-muted);">Quản lý thông tin đầu mối liên hệ cung cấp thực phẩm, gia vị và vật tư</span>
+            </div>
+            <button onclick="openModal('addSupplierModal')" class="btn-gold">
+              + Thêm Nhà Cung Cấp
+            </button>
+          </div>
+
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Tên nhà cung cấp</th>
+                <th>Người liên hệ</th>
+                <th>Số điện thoại</th>
+                <th>Email</th>
+                <th>Địa chỉ kho / cơ sở</th>
+                <th>Trạng thái</th>
+                <th style="text-align: right;">Hành động</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr th:if="${suppliers.isEmpty()}">
+                <td colspan="7" style="text-align: center; padding: 30px; color: var(--admin-text-muted);">
+                  Chưa có nhà cung cấp nào. Nhấn "+ Thêm Nhà Cung Cấp" để tạo mới.
+                </td>
+              </tr>
+              <tr th:each="s : ${suppliers}">
+                <td>
+                  <strong style="font-size: 14px;" th:text="${s.name}">Công ty Thực phẩm Sạch</strong>
+                </td>
+                <td th:text="${s.contactName != null ? s.contactName : '-'}">Anh Minh</td>
+                <td>
+                  <a th:href="'tel:' + ${s.phone}" style="color: var(--admin-gold); text-decoration: none; font-weight: 600;" th:text="${s.phone}">0905111222</a>
+                </td>
+                <td th:text="${s.email != null ? s.email : '-'}">contact@supplier.com</td>
+                <td style="color: var(--admin-text-muted);" th:text="${s.address != null ? s.address : '-'}">Hải Châu, Đà Nẵng</td>
+                <td>
+                  <span class="badge-status" th:classappend="${s.active ? 'status-completed' : 'status-cancelled'}" 
+                        th:text="${s.active ? 'Đang hợp tác' : 'Ngưng hợp tác'}">Đang hợp tác</span>
+                </td>
+                <td style="text-align: right;">
+                  <button type="button" 
+                          th:onclick="'prefillReceiptWithSupplier(' + ${s.id} + ')'"
+                          class="btn-sm btn-gold" style="font-size: 11px;">
+                    + Nhập hàng từ NCC này
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ==================== TAB 5: LỊCH SỬ BIẾN ĐỘNG KHO ==================== -->
+      <div th:if="${currentTab == 'history'}">
+        <div class="admin-card">
+          <div class="admin-card-header">
+            <div>
+              <h2>Sổ Nhật Ký Xuất - Nhập - Tồn Thời Gian Thực</h2>
+              <span style="font-size: 13px; color: var(--admin-text-muted);">Toàn bộ biến động kho được ghi nhận tự động phục vụ kiểm toán và truy vết sai lệch</span>
+            </div>
+          </div>
+
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Thời gian</th>
+                <th>Nguyên liệu</th>
+                <th>Loại biến động</th>
+                <th>Số lượng thay đổi</th>
+                <th>Tồn kho sau GD</th>
+                <th>Đơn giá vốn</th>
+                <th>Nhân viên</th>
+                <th>Ghi chú / Chứng từ</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr th:if="${transactions.isEmpty()}">
+                <td colspan="8" style="text-align: center; padding: 30px; color: var(--admin-text-muted);">
+                  Chưa có giao dịch biến động nào trong kho.
+                </td>
+              </tr>
+              <tr th:each="tx : ${transactions}">
+                <td th:text="${tx.formattedCreatedAt}">23/10/2026 15:46</td>
+                <td>
+                  <strong th:text="${tx.ingredientName}">Thịt bò Wagyu</strong>
+                  <div style="font-size: 11px; font-family: monospace; color: var(--admin-gold);" th:text="${tx.ingredientCode}">ING-001</div>
+                </td>
+                <td>
+                  <span class="badge-status" 
+                        th:classappend="${tx.transactionBadgeClass}" 
+                        th:text="${tx.transactionTypeName}">Nhập kho</span>
+                </td>
+                <td>
+                  <strong th:style="${tx.quantity.compareTo(T(java.math.BigDecimal).ZERO) > 0 ? 'color: #2f855a;' : 'color: #c53030;'}" 
+                          th:text="(${tx.quantity.compareTo(T(java.math.BigDecimal).ZERO) > 0 ? '+' : ''}) + ${tx.quantity} + ' ' + ${tx.unit}">
+                    +25.500 kg
+                  </strong>
+                </td>
+                <td>
+                  <strong th:text="${tx.balanceAfter} + ' ' + ${tx.unit}">25.500 kg</strong>
+                </td>
+                <td th:text="${tx.formattedUnitPrice}">450,000 đ</td>
+                <td th:text="${tx.employeeName != null ? tx.employeeName : 'Thủ kho'}">Vũ Thủ Kho</td>
+                <td style="color: var(--admin-text-muted);" th:text="${tx.note}">Nhập kho từ đối tác</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
 
     </div>
   </div>
 </div>
 
-<!-- Modal Thêm Nguyên Liệu Mới -->
-<div id="addIngModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; place-items: center; padding: 20px;">
-  <div style="background: white; width: min(480px, 100%); margin: 60px auto; padding: 28px; border-radius: 6px; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-      <h3 style="margin: 0; font-size: 18px;">Thêm Nguyên Liệu Vào Kho</h3>
-      <button onclick="document.getElementById('addIngModal').style.display='none'" style="background: none; border: none; font-size: 20px; cursor: pointer;">✕</button>
+<!-- ==================== MODAL 1: TẠO PHIẾU NHẬP KHO ==================== -->
+<div id="createReceiptModal" class="modal-overlay">
+  <div class="modal-container">
+    <div class="modal-header">
+      <h3> Lập Phiếu Nhập Kho Nguyên Liệu</h3>
+      <button onclick="closeModal('createReceiptModal')" style="background: none; border: none; font-size: 20px; cursor: pointer;">✕</button>
     </div>
 
-    <form th:action="@{/admin/inventory/add}" method="post">
-      <div style="margin-bottom: 14px;">
-        <label style="display: block; font-size: 11px; text-transform: uppercase; font-weight: bold; margin-bottom: 5px;">Mã nguyên liệu *</label>
-        <input name="code" type="text" required placeholder="Ví dụ: ING-SALMON" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+    <form th:action="@{/admin/inventory/create-receipt}" method="post">
+      <div class="form-group">
+        <label class="form-label">Nhà Cung Cấp *</label>
+        <select name="supplierId" id="receiptSupplierSelect" class="form-select" required>
+          <option value="">-- Chọn nhà cung cấp --</option>
+          <option th:each="s : ${suppliers}" th:value="${s.id}" th:text="${s.name} + ' (' + ${s.phone} + ')'"></option>
+        </select>
       </div>
 
-      <div style="margin-bottom: 14px;">
-        <label style="display: block; font-size: 11px; text-transform: uppercase; font-weight: bold; margin-bottom: 5px;">Tên nguyên liệu *</label>
-        <input name="name" type="text" required placeholder="Cá hồi Nauy tươi" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+      <div class="form-group">
+        <label class="form-label">Nguyên Liệu Tiếp Nhận *</label>
+        <select name="ingredientId" id="receiptIngredientSelect" class="form-select" required onchange="onReceiptIngredientChange(this)">
+          <option value="">-- Chọn nguyên liệu nhập --</option>
+          <option th:each="ing : ${ingredients}" 
+                  th:value="${ing.id}" 
+                  th:data-price="${ing.costPrice}"
+                  th:data-unit="${ing.unit}"
+                  th:text="${ing.code} + ' - ' + ${ing.name} + ' (' + ${ing.unit} + ')'">
+          </option>
+        </select>
       </div>
 
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
-        <div>
-          <label style="display: block; font-size: 11px; text-transform: uppercase; font-weight: bold; margin-bottom: 5px;">Đơn vị tính *</label>
-          <input name="unit" type="text" required placeholder="kg, lít, quả..." style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+        <div class="form-group">
+          <label class="form-label">Số Lượng Nhập *</label>
+          <input type="number" step="0.001" min="0.001" name="quantity" id="receiptQuantity" required placeholder="Ví dụ: 10" class="form-input" oninput="calculateReceiptTotal()">
         </div>
-        <div>
-          <label style="display: block; font-size: 11px; text-transform: uppercase; font-weight: bold; margin-bottom: 5px;">Số lượng nhập ban đầu *</label>
-          <input name="stockQuantity" type="number" step="0.1" value="10.0" required style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
-        </div>
-      </div>
-
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 22px;">
-        <div>
-          <label style="display: block; font-size: 11px; text-transform: uppercase; font-weight: bold; margin-bottom: 5px;">Ngưỡng tồn tối thiểu *</label>
-          <input name="minStockLevel" type="number" step="0.1" value="3.0" required style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
-        </div>
-        <div>
-          <label style="display: block; font-size: 11px; text-transform: uppercase; font-weight: bold; margin-bottom: 5px;">Giá vốn ước tính (VND) *</label>
-          <input name="costPrice" type="number" value="350000" required style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+        <div class="form-group">
+          <label class="form-label">Đơn Giá Nhập (VND) *</label>
+          <input type="number" step="1" min="0" name="unitPrice" id="receiptUnitPrice" required placeholder="Ví dụ: 450000" class="form-input" oninput="calculateReceiptTotal()">
         </div>
       </div>
 
-      <div style="display: flex; justify-content: flex-end; gap: 10px;">
-        <button type="button" onclick="document.getElementById('addIngModal').style.display='none'" class="btn-sm" style="padding: 10px 16px;">Hủy</button>
-        <button type="submit" class="btn-gold">Lưu Nguyên Liệu</button>
+      <div style="background: #fbf9f5; padding: 12px; border-radius: 4px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; border: 1px dashed var(--admin-line);">
+        <span style="font-size: 12px; font-weight: 600; text-transform: uppercase;">Ước tính thành tiền:</span>
+        <strong id="receiptTotalPreview" style="font-size: 16px; color: var(--admin-gold); font-family: 'Playfair Display', serif;">0 đ</strong>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Hạn Sử Dụng (Tùy chọn)</label>
+        <input type="date" name="expiryDate" class="form-input">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Ghi Chú Phiếu Nhập</label>
+        <textarea name="note" rows="2" class="form-textarea" placeholder="Ví dụ: Nhập theo hợp đồng tuần 4..."></textarea>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+        <button type="button" onclick="closeModal('createReceiptModal')" class="btn-sm" style="padding: 10px 16px;">Hủy bỏ</button>
+        <button type="submit" class="btn-gold" style="padding: 10px 20px;">Xác Nhận Nhập Kho</button>
       </div>
     </form>
   </div>
 </div>
+
+<!-- ==================== MODAL 2: XUẤT KHO / HAO HỤT ==================== -->
+<div id="exportModal" class="modal-overlay">
+  <div class="modal-container">
+    <div class="modal-header">
+      <h3> Lập Lệnh Xuất Kho / Báo Hỏng</h3>
+      <button onclick="closeModal('exportModal')" style="background: none; border: none; font-size: 20px; cursor: pointer;">✕</button>
+    </div>
+
+    <form th:action="@{/admin/inventory/export-stock}" method="post">
+      <div class="form-group">
+        <label class="form-label">Loại Nghiệp Vụ *</label>
+        <select name="transactionType" class="form-select" required>
+          <option value="EXPORT_KITCHEN"> Xuất cho Bếp Chế Biến</option>
+          <option value="SPOILAGE"> Báo Hỏng / Hao Hụt Sơ Chế</option>
+          <option value="ADJUSTMENT"> Kiểm Kê Điều Chỉnh Giảm</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Nguyên Liệu Cần Xuất *</label>
+        <select name="ingredientId" id="exportIngredientSelect" class="form-select" required>
+          <option value="">-- Chọn nguyên liệu --</option>
+          <option th:each="ing : ${ingredients}" 
+                  th:value="${ing.id}" 
+                  th:text="${ing.code} + ' - ' + ${ing.name} + ' (Hiện có: ' + ${ing.formattedStockQuantity} + ' ' + ${ing.unit} + ')'">
+          </option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Số Lượng Xuất *</label>
+        <input type="number" step="0.001" min="0.001" name="quantity" required placeholder="Ví dụ: 2.0" class="form-input">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Lý Do / Ghi Chú</label>
+        <textarea name="note" rows="2" class="form-textarea" placeholder="Ví dụ: Xuất cho ca tối Bếp trưởng..."></textarea>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+        <button type="button" onclick="closeModal('exportModal')" class="btn-sm" style="padding: 10px 16px;">Hủy bỏ</button>
+        <button type="submit" class="btn-gold" style="padding: 10px 20px; background: #c53030; border-color: #c53030;">Xác Nhận Trừ Kho</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ==================== MODAL 3: THÊM NGUYÊN LIỆU MỚI ==================== -->
+<div id="addIngModal" class="modal-overlay">
+  <div class="modal-container">
+    <div class="modal-header">
+      <h3>Thêm Nguyên Liệu Mới Vào Kho</h3>
+      <button onclick="closeModal('addIngModal')" style="background: none; border: none; font-size: 20px; cursor: pointer;">✕</button>
+    </div>
+
+    <form th:action="@{/admin/inventory/add}" method="post">
+      <div class="form-group">
+        <label class="form-label">Mã Nguyên Liệu *</label>
+        <input name="code" type="text" required placeholder="Ví dụ: ING-SALMON" class="form-input">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Tên Nguyên Liệu *</label>
+        <input name="name" type="text" required placeholder="Cá hồi Nauy tươi phi lê" class="form-input">
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+        <div class="form-group">
+          <label class="form-label">Đơn Vị Tính *</label>
+          <input name="unit" type="text" required placeholder="kg, lít, quả, hộp..." class="form-input">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Số Lượng Tồn Ban Đầu *</label>
+          <input name="stockQuantity" type="number" step="0.001" value="10.0" required class="form-input">
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+        <div class="form-group">
+          <label class="form-label">Định Mức Tồn Tối Thiểu *</label>
+          <input name="minStockLevel" type="number" step="0.001" value="3.0" required class="form-input">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Giá Vốn Ước Tính (VND) *</label>
+          <input name="costPrice" type="number" value="350000" required class="form-input">
+        </div>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+        <button type="button" onclick="closeModal('addIngModal')" class="btn-sm" style="padding: 10px 16px;">Hủy</button>
+        <button type="submit" class="btn-gold" style="padding: 10px 20px;">Lưu Nguyên Liệu</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ==================== MODAL 4: THÊM NHÀ CUNG CẤP MỚI ==================== -->
+<div id="addSupplierModal" class="modal-overlay">
+  <div class="modal-container">
+    <div class="modal-header">
+      <h3> Thêm Đối Tác &amp; Nhà Cung Cấp Mới</h3>
+      <button onclick="closeModal('addSupplierModal')" style="background: none; border: none; font-size: 20px; cursor: pointer;">✕</button>
+    </div>
+
+    <form th:action="@{/admin/inventory/add-supplier}" method="post">
+      <div class="form-group">
+        <label class="form-label">Tên Doanh Nghiệp / Nhà Cung Cấp *</label>
+        <input name="name" type="text" required placeholder="Ví dụ: Công ty TNHH Hải Sản Nha Trang" class="form-input">
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+        <div class="form-group">
+          <label class="form-label">Người Đại Diện / Liên Hệ</label>
+          <input name="contactName" type="text" placeholder="Anh Bình (Quản lý kho)" class="form-input">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Số Điện Thoại Liên Hệ *</label>
+          <input name="phone" type="tel" required placeholder="0905xxxxxx" class="form-input">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Email Liên Hệ</label>
+        <input name="email" type="email" placeholder="contact@supplier.vn" class="form-input">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Địa Chỉ Kho Hàng / Trụ Sở</label>
+        <input name="address" type="text" placeholder="Số 123 Đường Trần Phú, Đà Nẵng..." class="form-input">
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+        <button type="button" onclick="closeModal('addSupplierModal')" class="btn-sm" style="padding: 10px 16px;">Hủy bỏ</button>
+        <button type="submit" class="btn-gold" style="padding: 10px 20px;">Lưu Nhà Cung Cấp</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  function openModal(id) {
+    var modal = document.getElementById(id);
+    if (modal) modal.style.display = 'block';
+  }
+
+  function closeModal(id) {
+    var modal = document.getElementById(id);
+    if (modal) modal.style.display = 'none';
+  }
+
+  // Close modal when clicking outside
+  window.onclick = function(event) {
+    if (event.target.classList.contains('modal-overlay')) {
+      event.target.style.display = 'none';
+    }
+  };
+
+  // Instant filter in ingredient table
+  function filterIngredientTable() {
+    var input = document.getElementById('ingSearchInput');
+    var filter = input.value.toUpperCase();
+    var table = document.getElementById('ingredientTable');
+    if (!table) return;
+    var tr = table.getElementsByTagName('tr');
+
+    for (var i = 1; i < tr.length; i++) {
+      var tdCode = tr[i].getElementsByTagName('td')[0];
+      var tdName = tr[i].getElementsByTagName('td')[1];
+      if (tdCode || tdName) {
+        var txtValue = (tdCode ? tdCode.textContent || tdCode.innerText : '') + ' ' +
+                       (tdName ? tdName.textContent || tdName.innerText : '');
+        if (txtValue.toUpperCase().indexOf(filter) > -1) {
+          tr[i].style.display = '';
+        } else {
+          tr[i].style.display = 'none';
+        }
+      }
+    }
+  }
+
+  // Prefill receipt modal with chosen ingredient
+  function prefillReceipt(ingredientId, costPrice) {
+    openModal('createReceiptModal');
+    var select = document.getElementById('receiptIngredientSelect');
+    if (select) {
+      select.value = ingredientId;
+      var priceInput = document.getElementById('receiptUnitPrice');
+      if (priceInput && costPrice) {
+        priceInput.value = costPrice;
+      }
+      calculateReceiptTotal();
+    }
+  }
+
+  // Prefill receipt modal with chosen supplier
+  function prefillReceiptWithSupplier(supplierId) {
+    openModal('createReceiptModal');
+    var select = document.getElementById('receiptSupplierSelect');
+    if (select) {
+      select.value = supplierId;
+    }
+  }
+
+  // Prefill export modal with chosen ingredient
+  function prefillExport(ingredientId) {
+    openModal('exportModal');
+    var select = document.getElementById('exportIngredientSelect');
+    if (select) {
+      select.value = ingredientId;
+    }
+  }
+
+  // On receipt ingredient change
+  function onReceiptIngredientChange(select) {
+    var selectedOption = select.options[select.selectedIndex];
+    var price = selectedOption.getAttribute('data-price');
+    var priceInput = document.getElementById('receiptUnitPrice');
+    if (priceInput && price) {
+      priceInput.value = price;
+    }
+    calculateReceiptTotal();
+  }
+
+  // Calculate receipt total preview
+  function calculateReceiptTotal() {
+    var qty = parseFloat(document.getElementById('receiptQuantity').value) || 0;
+    var price = parseFloat(document.getElementById('receiptUnitPrice').value) || 0;
+    var total = qty * price;
+    var preview = document.getElementById('receiptTotalPreview');
+    if (preview) {
+      preview.innerText = new Intl.NumberFormat('vi-VN').format(total) + ' đ';
+    }
+  }
+
+  // Update notice for direct export select
+  function updateStockNotice(select) {
+    var notice = document.getElementById('exportStockNotice');
+    var opt = select.options[select.selectedIndex];
+    if (opt && opt.value) {
+      var stock = opt.getAttribute('data-stock');
+      var unit = opt.getAttribute('data-unit');
+      notice.innerText = 'Số lượng hiện có trong kho: ' + stock + ' ' + unit;
+    } else {
+      notice.innerText = '';
+    }
+  }
+
+  // Toggle receipt detail accordion row
+  function toggleReceiptDetail(receiptId) {
+    var row = document.getElementById('receipt-items-' + receiptId);
+    var arrow = document.getElementById('arrow-' + receiptId);
+    if (!row) return;
+    if (row.style.display === 'none' || row.style.display === '') {
+      row.style.display = 'table-row';
+      if (arrow) arrow.innerText = '▼';
+    } else {
+      row.style.display = 'none';
+      if (arrow) arrow.innerText = '▶';
+    }
+  }
+
+  // Switch between receipt overview and full items breakdown
+  function switchReceiptView(mode) {
+    var viewReceipt = document.getElementById('viewByReceipt');
+    var viewItems = document.getElementById('viewByItems');
+    var btnReceipt = document.getElementById('btnViewReceipts');
+    var btnItems = document.getElementById('btnViewItems');
+    if (mode === 'byReceipt') {
+      if (viewReceipt) viewReceipt.style.display = 'block';
+      if (viewItems) viewItems.style.display = 'none';
+      if (btnReceipt) {
+        btnReceipt.style.background = 'var(--admin-sidebar-bg)';
+        btnReceipt.style.color = '#fff';
+      }
+      if (btnItems) {
+        btnItems.style.background = 'transparent';
+        btnItems.style.color = '#555';
+      }
+    } else {
+      if (viewReceipt) viewReceipt.style.display = 'none';
+      if (viewItems) viewItems.style.display = 'block';
+      if (btnItems) {
+        btnItems.style.background = 'var(--admin-sidebar-bg)';
+        btnItems.style.color = '#fff';
+      }
+      if (btnReceipt) {
+        btnReceipt.style.background = 'transparent';
+        btnReceipt.style.color = '#555';
+      }
+    }
+  }
+
+  // Filter receipt items by keyword
+  function filterReceiptItemTable() {
+    var input = document.getElementById('receiptItemSearchInput');
+    if (!input) return;
+    var filter = input.value.toUpperCase();
+    var table = document.getElementById('receiptItemsTable');
+    if (!table) return;
+    var tr = table.getElementsByTagName('tr');
+
+    for (var i = 1; i < tr.length; i++) {
+      var tdSupplier = tr[i].getElementsByTagName('td')[2];
+      var tdName = tr[i].getElementsByTagName('td')[4];
+      if (tdSupplier || tdName) {
+        var txtValue = (tdSupplier ? tdSupplier.textContent || tdSupplier.innerText : '') + ' ' +
+                       (tdName ? tdName.textContent || tdName.innerText : '');
+        if (txtValue.toUpperCase().indexOf(filter) > -1) {
+          tr[i].style.display = '';
+        } else {
+          tr[i].style.display = 'none';
+        }
+      }
+    }
+  }
+</script>
 
 </body>
 </html>
