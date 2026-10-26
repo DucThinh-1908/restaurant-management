@@ -145,8 +145,13 @@
               <div th:if="${table.status == 'OCCUPIED'}">
                 <div th:with="currOrder=${tableOrderMap.get(table.id)}">
                   <!-- Báo động nếu món đã nấu xong -->
-                  <div th:if="${currOrder != null and currOrder.status == 'SERVING'}" class="food-alert-banner">
+                  <div th:if="${currOrder != null and currOrder.status == 'READY'}" class="food-alert-banner">
                     <span></span> <strong>Món đã nấu xong! Hãy bưng ra bàn ngay</strong>
+                  </div>
+
+                  <!-- Thông báo nếu đã yêu cầu tính tiền -->
+                  <div th:if="${currOrder != null and currOrder.billRequested}" style="background: #fffbeb; border: 1px solid #fef08a; color: #b45309; padding: 6px 10px; border-radius: 4px; font-size: 11px; font-weight: 700; text-align: center; margin-bottom: 8px;">
+                     ĐÃ YÊU CẦU TÍNH TIỀN - CHỜ THU NGÂN
                   </div>
 
                   <div th:if="${currOrder != null}">
@@ -220,13 +225,18 @@
 
                 <div style="display: flex; gap: 6px;">
                   <!-- Yêu cầu in hóa đơn sang Thu ngân -->
-                  <form th:if="${currOrder != null}" th:action="@{/admin/waiter/request-bill}" method="post" style="flex: 1;">
-                    <input type="hidden" name="tableNumber" th:value="${table.tableNumber}">
-                    <input type="hidden" name="orderCode" th:value="${currOrder.orderCode}">
-                    <button type="submit" class="btn-sm" style="width: 100%; background: #fff; border: 1px solid #b9955b; color: #b9955b; font-weight: 600; padding: 8px;">
-                       Yêu Cầu Tính Tiền
+                  <div th:if="${currOrder != null}" style="flex: 1;">
+                    <form th:if="${not currOrder.billRequested}" th:action="@{/admin/waiter/request-bill}" method="post">
+                      <input type="hidden" name="tableNumber" th:value="${table.tableNumber}">
+                      <input type="hidden" name="orderCode" th:value="${currOrder.orderCode}">
+                      <button type="submit" class="btn-sm" style="width: 100%; background: #fff; border: 1px solid #b9955b; color: #b9955b; font-weight: 600; padding: 8px;">
+                         Yêu Cầu Tính Tiền
+                      </button>
+                    </form>
+                    <button th:if="${currOrder.billRequested}" type="button" class="btn-sm" style="width: 100%; background: #fef3c7; border: 1px solid #f59e0b; color: #b45309; font-weight: 700; padding: 8px;" title="Thu ngân đang tiếp nhận tính tiền" disabled>
+                       Đã Báo Thu Ngân
                     </button>
-                  </form>
+                  </div>
 
                   <!-- Dọn bàn hoàn tất -->
                   <form th:action="@{/admin/waiter/clear-table}" method="post" style="flex: 1;" onsubmit="return confirm('Xác nhận khách đã rời đi và bàn đã được dọn sạch sẽ để đón khách mới?')">
@@ -279,9 +289,13 @@
               </div>
 
               <div style="display: flex; flex-direction: column; gap: 8px;">
-                <div th:each="item : ${ro.items}" style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: #fdfaf6; border-radius: 4px; border: 1px solid #f0ede6;">
+                <div th:each="item : ${ro.items}" style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: #fdfaf6; border-radius: 4px; border: 1px solid #f0ede6;"
+                     th:style="${item.status == 'SERVED' ? 'opacity: 0.5; background: #f1f5f9; border-color: #e2e8f0;' : ''}">
                   <div>
-                    <strong style="font-size: 14px;" th:text="${item.itemName}">Slow-Braised Beef</strong>
+                    <strong style="font-size: 14px;" th:text="${item.itemName}"
+                            th:style="${item.status == 'SERVED' ? 'text-decoration: line-through; color: #64748b;' : ''}">Slow-Braised Beef</strong>
+                    <span th:if="${item.status == 'SERVED'}" class="badge" style="background: #e2e8f0; color: #475569; font-size: 10px; margin-left: 6px;">✓ Đã lên bàn trước</span>
+                    <span th:if="${item.status != 'SERVED'}" class="badge" style="background: #dcfce7; color: #15803d; font-size: 10px; margin-left: 6px; font-weight: 700;"> CẦN BƯNG RA BÀN</span>
                     <div th:if="${item.note != null and not #strings.isEmpty(item.note)}" style="font-size: 11px; color: #c93b2b; font-style: italic;" th:text="'Ghi chú: ' + ${item.note}"></div>
                   </div>
                   <strong style="font-size: 16px; color: var(--admin-gold);" th:text="'x' + ${item.quantity}">x1</strong>
