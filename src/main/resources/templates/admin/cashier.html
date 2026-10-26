@@ -1,0 +1,860 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title th:text="${pageTitle}">Quầy Thu Ngân &amp; POS | GoD Admin</title>
+  <link rel="stylesheet" href="/css/admin.css">
+  <style>
+    /* Cashier POS specific styles */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .kpi-card {
+      background: white;
+      border: 1px solid var(--admin-line);
+      border-radius: 8px;
+      padding: 18px 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+      position: relative;
+      overflow: hidden;
+    }
+    .kpi-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; width: 4px; height: 100%;
+      background: var(--admin-gold);
+    }
+    .kpi-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--admin-text-muted);
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+    .kpi-value {
+      font-family: 'Playfair Display', serif;
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--admin-text);
+      line-height: 1.2;
+    }
+    .kpi-sub {
+      font-size: 11px;
+      color: var(--admin-text-muted);
+      margin-top: 4px;
+    }
+
+    /* Tabs */
+    .cashier-tabs {
+      display: flex;
+      gap: 8px;
+      border-bottom: 2px solid var(--admin-line);
+      margin-bottom: 24px;
+    }
+    .cashier-tab-btn {
+      padding: 12px 24px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--admin-text-muted);
+      text-decoration: none;
+      border-bottom: 3px solid transparent;
+      margin-bottom: -2px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all .2s;
+    }
+    .cashier-tab-btn:hover {
+      color: var(--admin-text);
+    }
+    .cashier-tab-btn.active {
+      color: var(--admin-gold);
+      border-bottom-color: var(--admin-gold);
+      font-weight: 700;
+    }
+
+    /* Grid of active orders */
+    .orders-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+    .order-pos-card {
+      background: white;
+      border: 1px solid var(--admin-line);
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+      transition: transform .15s, box-shadow .15s;
+    }
+    .order-pos-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+      border-color: var(--admin-gold);
+    }
+    .pos-card-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--admin-line);
+      background: #faf8f5;
+      border-top-left-radius: 8px;
+      border-top-right-radius: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .pos-card-body {
+      padding: 18px 20px;
+      flex: 1;
+    }
+    .pos-card-footer {
+      padding: 14px 20px;
+      border-top: 1px solid var(--admin-line);
+      background: #fff;
+      border-bottom-left-radius: 8px;
+      border-bottom-right-radius: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .pos-item-list {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      max-height: 160px;
+      overflow-y: auto;
+    }
+    .pos-item-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 0;
+      border-bottom: 1px dashed #f0ece6;
+      font-size: 13px;
+    }
+    .pos-item-row:last-child {
+      border-bottom: none;
+    }
+
+    /* Modal Checkout */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(2px);
+      display: none;
+      place-items: center;
+      z-index: 2000;
+      padding: 20px;
+    }
+    .modal-content {
+      background: white;
+      width: min(860px, 95vw);
+      max-height: 90vh;
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      overflow: hidden;
+      animation: modalFadeIn .2s ease-out;
+    }
+    @keyframes modalFadeIn {
+      from { opacity: 0; transform: scale(.96); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    .modal-header {
+      padding: 18px 24px;
+      background: var(--admin-sidebar-bg);
+      color: white;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .modal-body {
+      padding: 24px;
+      overflow-y: auto;
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+    @media (max-width: 768px) {
+      .modal-body { grid-template-columns: 1fr; }
+    }
+    .modal-footer {
+      padding: 16px 24px;
+      background: #faf8f5;
+      border-top: 1px solid var(--admin-line);
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .pay-method-btn {
+      padding: 10px 14px;
+      border: 1px solid var(--admin-line);
+      border-radius: 6px;
+      background: white;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all .15s;
+    }
+    .pay-method-btn:hover {
+      border-color: var(--admin-gold);
+      background: #faf8f5;
+    }
+    .pay-method-btn.active {
+      border-color: var(--admin-gold);
+      background: #faf5eb;
+      color: #987843;
+      box-shadow: 0 0 0 2px rgba(185, 149, 91, 0.2);
+    }
+
+    /* Print receipt styling */
+    @media print {
+      body * { visibility: hidden; }
+      #printableReceipt, #printableReceipt * { visibility: visible; }
+      #printableReceipt {
+        position: absolute;
+        left: 0; top: 0;
+        width: 80mm;
+        margin: 0 auto;
+        padding: 5mm;
+        font-family: 'Courier New', monospace;
+        font-size: 11px;
+        color: black;
+        background: white;
+      }
+      .no-print { display: none !important; }
+    }
+  </style>
+</head>
+<body class="admin-body">
+
+<div class="admin-layout">
+  <aside th:replace="~{admin/fragments/sidebar :: sidebar(${activeAdminPage})}"></aside>
+
+  <div class="admin-main">
+    <header class="admin-topbar">
+      <div>
+        <h1 style="margin: 0; font-size: 24px; font-family: 'Playfair Display', serif;">Quầy Thu Ngân &amp; Điểm Bán (POS)</h1>
+        <small style="color: var(--admin-text-muted);">
+          Thu ngân trực ca: <strong style="color: var(--admin-gold);" th:text="${employee.fullName}">Phạm Thu Ngân</strong>
+          &bull; Ca làm việc hôm nay
+        </small>
+      </div>
+
+      <!-- Tìm kiếm nhanh -->
+      <form th:action="@{/admin/cashier}" method="get" style="display: flex; gap: 8px;">
+        <input type="hidden" name="tab" th:value="${currentTab}">
+        <input type="text" name="search" th:value="${searchKeyword}" placeholder="Tìm theo bàn, mã đơn, khách..."
+               style="padding: 8px 14px; border: 1px solid var(--admin-line); border-radius: 20px; font-size: 13px; width: 260px; outline: none; background: white;">
+        <button type="submit" class="btn-sm btn-gold" style="border-radius: 20px; padding: 8px 16px;">Tìm</button>
+      </form>
+    </header>
+
+    <div class="admin-content">
+
+      <!-- Thông báo flash -->
+      <div th:if="${successMessage}" style="background: #edf7ed; color: #1e4620; padding: 14px 18px; border-radius: 6px; margin-bottom: 20px; border: 1px solid #c2e2c4; font-weight: 500;">
+        <span th:text="${successMessage}"></span>
+      </div>
+      <div th:if="${errorMessage}" style="background: #fdf2f2; color: #991b1b; padding: 14px 18px; border-radius: 6px; margin-bottom: 20px; border: 1px solid #f87171; font-weight: 500;">
+        <span th:text="${errorMessage}"></span>
+      </div>
+
+      <!-- KPI THU NGÂN TRONG NGÀY -->
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-title">Tổng Doanh Thu Hôm Nay</div>
+          <div class="kpi-value" style="color: #2e6830;" th:text="${#numbers.formatDecimal(stats.totalRevenueToday, 0, 'COMMA', 0, 'POINT')} + ' đ'">0 đ</div>
+          <div class="kpi-sub" th:text="${stats.completedCountToday} + ' hóa đơn đã xuất'"></div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-title">Tiền Mặt (CASH)</div>
+          <div class="kpi-value" th:text="${#numbers.formatDecimal(stats.cashRevenueToday, 0, 'COMMA', 0, 'POINT')} + ' đ'">0 đ</div>
+          <div class="kpi-sub">Thực thu tại két</div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-title">Chuyển Khoản &amp; QR</div>
+          <div class="kpi-value" style="color: #1e40af;" th:text="${#numbers.formatDecimal(stats.transferRevenueToday, 0, 'COMMA', 0, 'POINT')} + ' đ'">0 đ</div>
+          <div class="kpi-sub">Tài khoản ngân hàng VietQR</div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-title">Quẹt Thẻ &amp; Ví Điện Tử</div>
+          <div class="kpi-value" style="color: #7c2d12;" th:text="${#numbers.formatDecimal(stats.cardRevenueToday, 0, 'COMMA', 0, 'POINT')} + ' đ'">0 đ</div>
+          <div class="kpi-sub">Máy POS &amp; cổng thanh toán</div>
+        </div>
+
+        <div class="kpi-card" style="border-left: 4px solid #d97706;">
+          <div class="kpi-title">Bàn Đang Dùng Bữa / Chờ Thu</div>
+          <div class="kpi-value" style="color: #d97706;" th:text="${stats.activeCount}">0</div>
+          <div class="kpi-sub">Sẵn sàng xuất hóa đơn</div>
+        </div>
+      </div>
+
+      <!-- TABS CHUYỂN ĐỔI -->
+      <div class="cashier-tabs">
+        <a th:href="@{/admin/cashier(tab='active')}" class="cashier-tab-btn" th:classappend="${currentTab == 'active'} ? 'active' : ''">
+          <span></span> Bàn Cần Thanh Toán
+          <span style="background: var(--admin-gold); color: white; border-radius: 10px; padding: 2px 8px; font-size: 11px;" th:text="${activeOrders.size()}">0</span>
+        </a>
+        <a th:href="@{/admin/cashier(tab='history')}" class="cashier-tab-btn" th:classappend="${currentTab == 'history'} ? 'active' : ''">
+          <span></span> Lịch Sử Hóa Đơn Hôm Nay
+          <span style="background: #e2e8f0; color: #475569; border-radius: 10px; padding: 2px 8px; font-size: 11px;" th:text="${completedOrders.size()}">0</span>
+        </a>
+      </div>
+
+      <!-- TAB 1: BÀN CẦN THANH TOÁN (ACTIVE ORDERS) -->
+      <div th:if="${currentTab == 'active'}">
+        <div th:if="${#lists.isEmpty(activeOrders)}" style="text-align: center; padding: 60px 20px; background: white; border-radius: 8px; border: 1px dashed var(--admin-line);">
+          <div style="font-size: 40px; margin-bottom: 12px;"></div>
+          <h3 style="margin: 0 0 8px 0; color: var(--admin-text);">Hiện không có bàn nào đang chờ thanh toán!</h3>
+          <p style="color: var(--admin-text-muted); font-size: 14px; margin: 0;">Khi phục vụ tạo đơn tại bàn hoặc khách đặt món online, đơn hàng sẽ hiển thị tại đây.</p>
+        </div>
+
+        <div class="orders-grid" th:if="${not #lists.isEmpty(activeOrders)}">
+          <div th:each="order : ${activeOrders}" class="order-pos-card">
+            <div class="pos-card-header">
+              <div>
+                <span th:if="${order.tableNumber != null}" 
+                      style="display: inline-block; background: #e0f2fe; color: #0369a1; padding: 3px 10px; border-radius: 4px; font-weight: 800; font-size: 14px; font-family: monospace;"
+                      th:text="'BÀN ' + ${order.tableNumber}">BÀN T1-01</span>
+                <span th:if="${order.tableNumber == null}" 
+                      style="display: inline-block; background: #fef3c7; color: #92400e; padding: 3px 10px; border-radius: 4px; font-weight: 700; font-size: 12px;"
+                      th:text="${order.orderTypeDisplayName}">MANG VỀ</span>
+                <small style="display: block; color: var(--admin-text-muted); margin-top: 4px; font-family: monospace;" th:text="${order.orderCode}">ORD-001</small>
+              </div>
+              <div style="text-align: right;">
+                <span class="badge-status" 
+                      th:classappend="${order.status == 'SERVING' ? 'status-serving' : (order.status == 'COOKING' ? 'status-pending' : 'status-pending')}"
+                      th:text="${order.statusDisplayName}">Đang phục vụ</span>
+                <small style="display: block; color: var(--admin-text-muted); margin-top: 4px;" th:text="'Ngồi ' + ${order.minutesWaiting} + ' phút'"></small>
+              </div>
+            </div>
+
+            <div class="pos-card-body">
+              <div style="margin-bottom: 12px; font-size: 13px;">
+                Khách: <strong th:text="${order.customerName}">Nguyễn Hoàng Nam</strong>
+                <span th:if="${order.customerPhone != null}" style="color: var(--admin-text-muted);" th:text="' - SĐT: ' + ${order.customerPhone}"></span>
+              </div>
+
+              <div style="font-size: 11px; text-transform: uppercase; font-weight: bold; color: var(--admin-text-muted); margin-bottom: 6px;">
+                Món đã gọi (<span th:text="${order.items.size()}">3</span> món)
+              </div>
+              <ul class="pos-item-list">
+                <li th:each="item : ${order.items}" class="pos-item-row">
+                  <div>
+                    <span th:text="${item.itemName}" style="font-weight: 500;">Bò Wagyu Nướng</span>
+                    <small th:if="${item.note != null and not #strings.isEmpty(item.note)}" 
+                           style="color: #92400e; display: block; font-style: italic;" th:text="'(' + ${item.note} + ')'"></small>
+                  </div>
+                  <div style="text-align: right;">
+                    <span th:text="'x' + ${item.quantity}" style="font-weight: bold; color: var(--admin-gold); margin-right: 8px;"></span>
+                    <span th:text="${#numbers.formatDecimal(item.unitPrice.multiply(T(java.math.BigDecimal).valueOf(item.quantity)), 0, 'COMMA', 0, 'POINT')} + ' đ'"></span>
+                  </div>
+                </li>
+              </ul>
+            </div>
+
+            <div class="pos-card-footer">
+              <div>
+                <small style="display: block; color: var(--admin-text-muted); font-size: 11px;">Tổng tạm tính (gồm VAT 8%):</small>
+                <strong style="font-size: 18px; font-family: 'Playfair Display', serif; color: var(--admin-text);"
+                        th:text="${#numbers.formatDecimal(order.totalAmount, 0, 'COMMA', 0, 'POINT')} + ' đ'">450,000 đ</strong>
+              </div>
+              <div>
+                <button type="button" class="btn-sm btn-gold" style="padding: 9px 18px; font-weight: 700; font-size: 13px; box-shadow: 0 2px 6px rgba(185,149,91,0.3);"
+                        th:attr="onclick='openCheckoutModal(' + ${order.id} + ')'">
+                  💳 Thanh Toán
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 2: LỊCH SỬ HÓA ĐƠN HÔM NAY (COMPLETED ORDERS) -->
+      <div th:if="${currentTab == 'history'}" class="admin-card">
+        <div class="admin-card-header">
+          <h2>Hóa Đơn Đã Thanh Toán Trong Ngày</h2>
+          <span style="font-size: 13px; color: var(--admin-text-muted);" th:text="'Tổng cộng: ' + ${completedOrders.size()} + ' hóa đơn'"></span>
+        </div>
+
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Mã Đơn / Hóa Đơn</th>
+              <th>Bàn / Loại Đơn</th>
+              <th>Khách Hàng</th>
+              <th>Giờ Thanh Toán</th>
+              <th>Phương Thức</th>
+              <th>Thu Ngân</th>
+              <th>Tổng Tiền</th>
+              <th style="text-align: right;">In / Phiếu</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr th:each="ord : ${completedOrders}">
+              <td>
+                <strong style="font-family: monospace; color: var(--admin-gold); font-size: 14px;" th:text="${ord.orderCode}">ORD-001</strong>
+              </td>
+              <td>
+                <span th:if="${ord.tableNumber != null}" style="font-weight: 700; color: #0369a1;" th:text="'Bàn ' + ${ord.tableNumber}">Bàn T1-01</span>
+                <span th:if="${ord.tableNumber == null}" style="color: var(--admin-text-muted);" th:text="${ord.orderTypeDisplayName}">Mang về</span>
+              </td>
+              <td>
+                <strong th:text="${ord.customerName}">Lê Thị Mai</strong>
+                <small th:if="${ord.customerPhone != null}" style="display: block; color: var(--admin-text-muted);" th:text="${ord.customerPhone}"></small>
+              </td>
+              <td>
+                <span th:text="${ord.formattedCompletedAt}">18:45</span>
+              </td>
+              <td>
+                <span class="badge-status status-completed" th:text="${ord.paymentMethodDisplayName}">Tiền mặt</span>
+                <small th:if="${ord.transactionCode != null}" style="display: block; font-family: monospace; font-size: 10px; color: #666;" th:text="${ord.transactionCode}"></small>
+              </td>
+              <td>
+                <small style="color: #2e6830; font-weight: 600;" th:text="${ord.cashierName ?: employee.fullName}">Phạm Thu Ngân</small>
+              </td>
+              <td>
+                <strong style="font-family: 'Playfair Display', serif; font-size: 15px; color: var(--admin-text);"
+                        th:text="${#numbers.formatDecimal(ord.totalAmount, 0, 'COMMA', 0, 'POINT')} + ' đ'">480,000 đ</strong>
+              </td>
+              <td style="text-align: right;">
+                <button type="button" class="btn-sm" style="border: 1px solid var(--admin-line); background: white; font-size: 11px; padding: 5px 10px;"
+                        th:attr="onclick='openReceiptPreview(' + ${ord.id} + ')'">
+                   In Lại HĐ
+                </button>
+              </td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(completedOrders)}">
+              <td colspan="8" style="text-align: center; color: var(--admin-text-muted); padding: 40px;">Hôm nay chưa có hóa đơn nào được xuất</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ========================================================
+     MODAL THANH TOÁN POS (CHECKOUT MODAL)
+     ======================================================== -->
+<div id="checkoutModal" class="modal-overlay">
+  <div class="modal-content">
+    <div class="modal-header">
+      <div>
+        <h3 style="margin: 0; font-size: 18px; font-family: 'Playfair Display', serif;" id="modalTitle">Thanh Toán Đơn Hàng</h3>
+        <small style="color: var(--admin-gold);" id="modalSubtitle">Bàn T1-01 &bull; ORD-20261026-001</small>
+      </div>
+      <button onclick="closeCheckoutModal()" style="background: none; border: none; color: white; font-size: 22px; cursor: pointer;">✕</button>
+    </div>
+
+    <form th:action="@{/admin/cashier/checkout}" method="post" id="checkoutForm">
+      <input type="hidden" name="orderId" id="checkoutOrderId">
+      <input type="hidden" name="paymentMethod" id="checkoutPaymentMethod" value="CASH">
+
+      <div class="modal-body">
+        <!-- CỘT TRÁI: DANH SÁCH MÓN ĂN -->
+        <div style="border-right: 1px solid var(--admin-line); padding-right: 20px;">
+          <h4 style="margin: 0 0 12px 0; font-size: 14px; text-transform: uppercase; color: var(--admin-text-muted);">Chi Tiết Món Ăn</h4>
+          <table style="width: 100%; border-collapse: collapse; font-size: 13px;" id="orderItemsTable">
+            <thead>
+              <tr style="border-bottom: 2px solid var(--admin-line); text-align: left; color: var(--admin-text-muted); font-size: 11px; text-transform: uppercase;">
+                <th style="padding: 6px 0;">Món</th>
+                <th style="padding: 6px 0; text-align: center;">SL</th>
+                <th style="padding: 6px 0; text-align: right;">Đơn giá</th>
+                <th style="padding: 6px 0; text-align: right;">Thành tiền</th>
+              </tr>
+            </thead>
+            <tbody id="orderItemsBody">
+              <!-- Render dynamically -->
+            </tbody>
+          </table>
+
+          <div style="margin-top: 20px; padding: 12px; background: #faf8f5; border-radius: 6px; font-size: 12px;">
+            <div>Khách hàng: <strong id="modalCustName">Nguyễn Hoàng Nam</strong></div>
+            <div>SĐT: <span id="modalCustPhone">0912345678</span></div>
+            <div style="margin-top: 4px; color: #2e6830;"> Tích lũy dự kiến: <strong id="modalPoints">45 điểm</strong></div>
+          </div>
+        </div>
+
+        <!-- CỘT PHẢI: BỘ TÍNH TIỀN & PHƯƠNG THỨC -->
+        <div>
+          <!-- Bảng tổng hợp tiền -->
+          <div style="background: #fdfbf7; border: 1px solid var(--admin-line); border-radius: 6px; padding: 16px; margin-bottom: 18px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px;">
+              <span style="color: var(--admin-text-muted);">Tiền món (Subtotal):</span>
+              <strong id="displaySubtotal">0 đ</strong>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 13px;">
+              <span style="color: var(--admin-text-muted);">Giảm giá / Voucher (đ):</span>
+              <input type="number" id="inputDiscount" name="discount" value="0" min="0" step="5000" oninput="recalcPayment()"
+                     style="width: 120px; text-align: right; padding: 4px 8px; border: 1px solid var(--admin-line); border-radius: 4px; font-size: 13px;">
+            </div>
+
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px;">
+              <span style="color: var(--admin-text-muted);">Thuế VAT (8%):</span>
+              <span id="displayTax">0 đ</span>
+            </div>
+
+            <hr style="border: 0; border-top: 1px solid var(--admin-line); margin: 10px 0;">
+
+            <div style="display: flex; justify-content: space-between; align-items: baseline;">
+              <strong style="font-size: 15px;">TỔNG THANH TOÁN:</strong>
+              <strong style="font-size: 24px; font-family: 'Playfair Display', serif; color: var(--admin-gold);" id="displayTotal">0 đ</strong>
+            </div>
+          </div>
+
+          <!-- Chọn phương thức thanh toán -->
+          <div style="margin-bottom: 14px;">
+            <label style="display: block; font-size: 11px; text-transform: uppercase; font-weight: 700; color: var(--admin-text-muted); margin-bottom: 8px;">
+              Phương Thức Thanh Toán:
+            </label>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+              <button type="button" class="pay-method-btn active" id="btnPayCash" onclick="selectPayMethod('CASH')">
+                 Tiền mặt
+              </button>
+              <button type="button" class="pay-method-btn" id="btnPayBank" onclick="selectPayMethod('BANK_TRANSFER')">
+                 Chuyển khoản QR
+              </button>
+              <button type="button" class="pay-method-btn" id="btnPayCard" onclick="selectPayMethod('CREDIT_CARD')">
+                 Quẹt thẻ POS
+              </button>
+              <button type="button" class="pay-method-btn" id="btnPayWallet" onclick="selectPayMethod('E_WALLET')">
+                 Ví điện tử
+              </button>
+            </div>
+          </div>
+
+          <!-- Vùng tiền mặt -->
+          <div id="cashPanel" style="background: #faf8f5; border: 1px solid #e3ded6; border-radius: 6px; padding: 12px; margin-bottom: 14px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+              <span style="font-size: 13px; font-weight: 600;">Tiền khách đưa (đ):</span>
+              <input type="number" id="inputCashGiven" min="0" step="10000" oninput="recalcCashChange()" placeholder="0"
+                     style="width: 140px; text-align: right; padding: 6px 10px; border: 1px solid var(--admin-gold); border-radius: 4px; font-size: 14px; font-weight: bold;">
+            </div>
+            <div style="display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: wrap;">
+              <button type="button" class="btn-sm" onclick="setCashExact()" style="font-size: 11px; padding: 3px 8px; background: white; border: 1px solid #ccc;">Đủ tiền</button>
+              <button type="button" class="btn-sm" onclick="addCash(100000)" style="font-size: 11px; padding: 3px 8px; background: white; border: 1px solid #ccc;">+100k</button>
+              <button type="button" class="btn-sm" onclick="addCash(200000)" style="font-size: 11px; padding: 3px 8px; background: white; border: 1px solid #ccc;">+200k</button>
+              <button type="button" class="btn-sm" onclick="addCash(500000)" style="font-size: 11px; padding: 3px 8px; background: white; border: 1px solid #ccc;">+500k</button>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 13px; font-weight: 700; color: #2e6830;">
+              <span>Tiền thối lại:</span>
+              <span id="displayChange" style="font-size: 16px;">0 đ</span>
+            </div>
+          </div>
+
+          <!-- Vùng Chuyển khoản QR -->
+          <div id="bankPanel" style="display: none; background: #f0f7ff; border: 1px solid #bfdbfe; border-radius: 6px; padding: 14px; margin-bottom: 14px; text-align: center;">
+            <div style="font-size: 12px; font-weight: 700; color: #1e40af; margin-bottom: 6px;">QUÉT MÃ VIETQR NHÀ HÀNG</div>
+            <div style="font-size: 11px; color: #475569; margin-bottom: 8px;">
+              Ngân hàng: <strong>Vietcombank</strong> &bull; STK: <strong>9988776655</strong><br>
+              Chủ TK: <strong>NHA HANG DUC THINH</strong>
+            </div>
+            <div style="display: inline-block; background: white; padding: 10px; border-radius: 6px; border: 1px solid #cbd5e1; margin-bottom: 8px;">
+              <img src="https://api.qrserver.com/v1/create-qr-code/?size=130x130&data=VIETQR-DUCTHINH" alt="VietQR" style="display: block; width: 130px; height: 130px;">
+            </div>
+            <div style="font-size: 12px; font-weight: bold; color: #1e40af;" id="qrContentText">Nội dung: ORD-001</div>
+          </div>
+
+          <!-- Vùng Quẹt thẻ POS / Ví điện tử -->
+          <div id="cardPanel" style="display: none; background: #faf8f5; border: 1px solid #e3ded6; border-radius: 6px; padding: 12px; margin-bottom: 14px;">
+            <label style="display: block; font-size: 11px; text-transform: uppercase; font-weight: bold; margin-bottom: 4px;">Mã Phê Duyệt POS / Mã Giao Dịch</label>
+            <input type="text" name="transactionCode" id="inputTxCode" placeholder="VD: POS-987654 hoặc MoMo-12345"
+                   style="width: 100%; padding: 8px 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px;">
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" onclick="printBillPreview()" class="btn-sm" style="background: white; border: 1px solid var(--admin-line); padding: 10px 18px;">
+          🖨 In Phiếu Tạm Tính
+        </button>
+        <button type="button" onclick="closeCheckoutModal()" class="btn-sm" style="padding: 10px 18px;">
+          Hủy
+        </button>
+        <button type="submit" class="btn-gold" style="padding: 10px 24px; font-weight: 700;">
+          ✓ Xác Nhận Đã Thu Tiền &amp; Xuất HĐ
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ========================================================
+     MODAL & MẪU IN HÓA ĐƠN VAT (PRINTABLE RECEIPT)
+     ======================================================== -->
+<div id="receiptModal" class="modal-overlay">
+  <div class="modal-content" style="width: min(440px, 95vw);">
+    <div class="modal-header">
+      <h3 style="margin: 0; font-size: 16px;">Hóa Đơn Thanh Toán</h3>
+      <button onclick="closeReceiptModal()" style="background: none; border: none; color: white; font-size: 20px; cursor: pointer;">✕</button>
+    </div>
+    
+    <div class="modal-body" style="grid-template-columns: 1fr; padding: 20px;" id="printableReceiptArea">
+      <!-- MẪU IN HÓA ĐƠN THEO TIÊU CHUẨN 80MM -->
+      <div id="printableReceipt" style="width: 100%; font-family: 'Courier New', Courier, monospace; color: #111;">
+        <div style="text-align: center; border-bottom: 1px dashed #444; padding-bottom: 12px; margin-bottom: 12px;">
+          <h2 style="margin: 0 0 4px 0; font-size: 18px; font-family: 'Playfair Display', serif; text-transform: uppercase;">DUC THINH RESTAURANT</h2>
+          <div style="font-size: 10px;">Fine Dining &amp; Asian Culinary Art</div>
+          <div style="font-size: 10px;">Đ/c: Số 123 Đại Lộ Hoàng Gia, Hà Nội</div>
+          <div style="font-size: 10px;">Hotline: 1900 8888 &bull; MST: 0109988776</div>
+          <div style="font-size: 14px; font-weight: bold; margin-top: 8px;">PHIẾU THANH TOÁN</div>
+        </div>
+
+        <div style="font-size: 11px; margin-bottom: 10px;">
+          <div>Mã HĐ: <strong id="rcOrderCode">ORD-001</strong></div>
+          <div>Bàn: <strong id="rcTable">T1-01</strong> &bull; Khách: <span id="rcCustomer">Nguyễn Hoàng Nam</span></div>
+          <div>Giờ vào: <span id="rcCreatedAt">18:00</span></div>
+          <div>Giờ in: <span id="rcCompletedAt">19:30</span></div>
+          <div>Thu ngân: <span id="rcCashier">Phạm Thu Ngân</span></div>
+        </div>
+
+        <table style="width: 100%; border-collapse: collapse; font-size: 11px; margin-bottom: 10px;">
+          <thead>
+            <tr style="border-top: 1px dashed #444; border-bottom: 1px dashed #444; text-align: left;">
+              <th style="padding: 4px 0;">Món</th>
+              <th style="padding: 4px 0; text-align: center;">SL</th>
+              <th style="padding: 4px 0; text-align: right;">Đơn giá</th>
+              <th style="padding: 4px 0; text-align: right;">T.Tiền</th>
+            </tr>
+          </thead>
+          <tbody id="rcItemsBody">
+            <!-- Dynamic rows -->
+          </tbody>
+        </table>
+
+        <div style="border-top: 1px dashed #444; padding-top: 6px; font-size: 11px;">
+          <div style="display: flex; justify-content: space-between; margin-bottom: 3px;">
+            <span>Tiền món:</span>
+            <span id="rcSubtotal">0 đ</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 3px;">
+            <span>Giảm giá:</span>
+            <span id="rcDiscount">0 đ</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 3px;">
+            <span>VAT (8%):</span>
+            <span id="rcTax">0 đ</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; font-size: 14px; font-weight: bold; border-top: 1px solid #111; padding-top: 4px; margin-top: 4px;">
+            <span>TỔNG CỘNG:</span>
+            <span id="rcTotal">0 đ</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; font-size: 11px; margin-top: 4px;">
+            <span>Hình thức:</span>
+            <strong id="rcMethod">Tiền mặt</strong>
+          </div>
+        </div>
+
+        <div style="text-align: center; border-top: 1px dashed #444; margin-top: 12px; padding-top: 8px; font-size: 10px;">
+          <div>Cảm ơn Quý khách &amp; Hẹn gặp lại!</div>
+          <div style="font-style: italic; margin-top: 2px;">Wifi: DucThinh_VIP / Pass: 88888888</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer no-print">
+      <button type="button" onclick="closeReceiptModal()" class="btn-sm" style="padding: 8px 16px;">Đóng</button>
+      <button type="button" onclick="window.print()" class="btn-gold" style="padding: 8px 20px;">🖨 In Hóa Đơn</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  let currentOrderData = null;
+
+  function openCheckoutModal(orderId) {
+    fetch('/admin/cashier/receipt/' + orderId)
+      .then(res => res.json())
+      .then(data => {
+        if (data.error) {
+          alert('Không tìm thấy thông tin đơn hàng!');
+          return;
+        }
+        currentOrderData = data;
+        document.getElementById('checkoutOrderId').value = data.orderId;
+        document.getElementById('modalTitle').textContent = 'Thanh Toán ' + (data.tableNumber !== '—' ? 'Bàn ' + data.tableNumber : data.orderType);
+        document.getElementById('modalSubtitle').textContent = 'Mã đơn: ' + data.orderCode + ' • Khách: ' + data.customerName;
+        document.getElementById('modalCustName').textContent = data.customerName;
+        document.getElementById('modalCustPhone').textContent = data.customerPhone || 'Không có';
+        document.getElementById('qrContentText').textContent = 'Nội dung CK: ' + data.orderCode;
+
+        // Render món
+        const tbody = document.getElementById('orderItemsBody');
+        tbody.innerHTML = '';
+        if (data.items) {
+          data.items.forEach(it => {
+            const tr = document.createElement('tr');
+            tr.style.borderBottom = '1px dashed #f0ece6';
+            tr.innerHTML = `
+              <td style="padding: 8px 0;"><strong>${it.itemName}</strong></td>
+              <td style="padding: 8px 0; text-align: center; font-weight: bold; color: var(--admin-gold);">${it.quantity}</td>
+              <td style="padding: 8px 0; text-align: right;">${Number(it.unitPrice).toLocaleString()} đ</td>
+              <td style="padding: 8px 0; text-align: right; font-weight: 600;">${(Number(it.unitPrice) * it.quantity).toLocaleString()} đ</td>
+            `;
+            tbody.appendChild(tr);
+          });
+        }
+
+        document.getElementById('inputDiscount').value = data.discount || 0;
+        document.getElementById('inputCashGiven').value = '';
+        selectPayMethod('CASH');
+        recalcPayment();
+
+        document.getElementById('checkoutModal').style.display = 'grid';
+      })
+      .catch(err => {
+        console.error(err);
+        alert('Lỗi khi tải thông tin đơn hàng!');
+      });
+  }
+
+  function closeCheckoutModal() {
+    document.getElementById('checkoutModal').style.display = 'none';
+  }
+
+  function recalcPayment() {
+    if (!currentOrderData) return;
+    const subtotal = Number(currentOrderData.subtotal) || 0;
+    let discount = Number(document.getElementById('inputDiscount').value) || 0;
+    if (discount < 0) discount = 0;
+    if (discount > subtotal) discount = subtotal;
+
+    const afterDiscount = subtotal - discount;
+    const tax = Math.round(afterDiscount * 0.08);
+    const total = afterDiscount + tax;
+
+    document.getElementById('displaySubtotal').textContent = subtotal.toLocaleString() + ' đ';
+    document.getElementById('displayTax').textContent = tax.toLocaleString() + ' đ';
+    document.getElementById('displayTotal').textContent = total.toLocaleString() + ' đ';
+
+    const points = Math.floor(total / 10000);
+    document.getElementById('modalPoints').textContent = points + ' điểm';
+
+    recalcCashChange();
+  }
+
+  function selectPayMethod(method) {
+    document.getElementById('checkoutPaymentMethod').value = method;
+    document.querySelectorAll('.pay-method-btn').forEach(btn => btn.classList.remove('active'));
+
+    document.getElementById('cashPanel').style.display = 'none';
+    document.getElementById('bankPanel').style.display = 'none';
+    document.getElementById('cardPanel').style.display = 'none';
+
+    if (method === 'CASH') {
+      document.getElementById('btnPayCash').classList.add('active');
+      document.getElementById('cashPanel').style.display = 'block';
+      recalcCashChange();
+    } else if (method === 'BANK_TRANSFER') {
+      document.getElementById('btnPayBank').classList.add('active');
+      document.getElementById('bankPanel').style.display = 'block';
+    } else if (method === 'CREDIT_CARD') {
+      document.getElementById('btnPayCard').classList.add('active');
+      document.getElementById('cardPanel').style.display = 'block';
+    } else if (method === 'E_WALLET') {
+      document.getElementById('btnPayWallet').classList.add('active');
+      document.getElementById('cardPanel').style.display = 'block';
+    }
+  }
+
+  function recalcCashChange() {
+    if (!currentOrderData) return;
+    const subtotal = Number(currentOrderData.subtotal) || 0;
+    const discount = Number(document.getElementById('inputDiscount').value) || 0;
+    const total = Math.max(0, subtotal - discount) + Math.round(Math.max(0, subtotal - discount) * 0.08);
+
+    const cashGiven = Number(document.getElementById('inputCashGiven').value) || 0;
+    const change = Math.max(0, cashGiven - total);
+
+    document.getElementById('displayChange').textContent = change.toLocaleString() + ' đ';
+  }
+
+  function setCashExact() {
+    if (!currentOrderData) return;
+    const subtotal = Number(currentOrderData.subtotal) || 0;
+    const discount = Number(document.getElementById('inputDiscount').value) || 0;
+    const total = Math.max(0, subtotal - discount) + Math.round(Math.max(0, subtotal - discount) * 0.08);
+    document.getElementById('inputCashGiven').value = total;
+    recalcCashChange();
+  }
+
+  function addCash(amount) {
+    let current = Number(document.getElementById('inputCashGiven').value) || 0;
+    document.getElementById('inputCashGiven').value = current + amount;
+    recalcCashChange();
+  }
+
+  function openReceiptPreview(orderId) {
+    fetch('/admin/cashier/receipt/' + orderId)
+      .then(res => res.json())
+      .then(data => {
+        if (data.error) {
+          alert('Không tìm thấy hóa đơn!');
+          return;
+        }
+        document.getElementById('rcOrderCode').textContent = data.orderCode;
+        document.getElementById('rcTable').textContent = data.tableNumber;
+        document.getElementById('rcCustomer').textContent = data.customerName;
+        document.getElementById('rcCreatedAt').textContent = data.createdAt;
+        document.getElementById('rcCompletedAt').textContent = data.completedAt || new Date().toLocaleTimeString();
+        document.getElementById('rcCashier').textContent = data.cashierName;
+        document.getElementById('rcSubtotal').textContent = Number(data.subtotal).toLocaleString() + ' đ';
+        document.getElementById('rcDiscount').textContent = Number(data.discount || 0).toLocaleString() + ' đ';
+        document.getElementById('rcTax').textContent = Number(data.taxAmount || 0).toLocaleString() + ' đ';
+        document.getElementById('rcTotal').textContent = Number(data.totalAmount).toLocaleString() + ' đ';
+        document.getElementById('rcMethod').textContent = data.paymentMethod;
+
+        const tbody = document.getElementById('rcItemsBody');
+        tbody.innerHTML = '';
+        if (data.items) {
+          data.items.forEach(it => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+              <td style="padding: 2px 0;">${it.itemName}</td>
+              <td style="padding: 2px 0; text-align: center;">${it.quantity}</td>
+              <td style="padding: 2px 0; text-align: right;">${Number(it.unitPrice).toLocaleString()}</td>
+              <td style="padding: 2px 0; text-align: right;">${(Number(it.unitPrice) * it.quantity).toLocaleString()}</td>
+            `;
+            tbody.appendChild(tr);
+          });
+        }
+
+        document.getElementById('receiptModal').style.display = 'grid';
+      });
+  }
+
+  function closeReceiptModal() {
+    document.getElementById('receiptModal').style.display = 'none';
+  }
+
+  function printBillPreview() {
+    if (currentOrderData) {
+      openReceiptPreview(currentOrderData.orderId);
+    }
+  }
+</script>
+
+</body>
+</html>

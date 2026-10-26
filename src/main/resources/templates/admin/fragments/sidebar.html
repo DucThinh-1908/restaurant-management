@@ -31,8 +31,8 @@
       <span class="admin-nav-icon"></span> Trực Bàn &amp; Phục Vụ
     </a>
 
-    <!-- Sơ đồ bàn (Lễ tân, Phục vụ, Quản lý) -->
-    <a th:if="${employee.roleName == 'RECEPTIONIST' or employee.roleName == 'WAITER' or employee.roleName == 'ADMIN' or employee.roleName == 'MANAGER'}"
+    <!-- Sơ đồ bàn (Lễ tân, Phục vụ, Thu ngân, Quản lý, Admin) -->
+    <a th:if="${employee.roleName == 'RECEPTIONIST' or employee.roleName == 'WAITER' or employee.roleName == 'CASHIER' or employee.roleName == 'ADMIN' or employee.roleName == 'MANAGER'}"
        th:href="@{/admin/tables}" th:classappend="${activeAdminPage == 'tables'} ? 'active' : ''">
       <span class="admin-nav-icon"></span> Sơ Đồ Bàn Ăn
     </a>
@@ -49,10 +49,16 @@
       <span class="admin-nav-icon"></span> Công Thức &amp; Định Lượng
     </a>
 
-    <!-- Đơn hàng (Thu ngân, Quản lý, Admin) -->
+    <!-- QUẦY THU NGÂN & POS (CASHIER, ADMIN, MANAGER) -->
+    <a th:if="${employee.roleName == 'CASHIER' or employee.roleName == 'ADMIN' or employee.roleName == 'MANAGER'}"
+       th:href="@{/admin/cashier}" th:classappend="${activeAdminPage == 'cashier'} ? 'active' : ''">
+      <span class="admin-nav-icon"></span> Quầy Thu Ngân (POS)
+    </a>
+
+    <!-- Tất cả đơn hàng (Thu ngân, Quản lý, Admin) -->
     <a th:if="${employee.roleName == 'CASHIER' or employee.roleName == 'ADMIN' or employee.roleName == 'MANAGER'}"
        th:href="@{/admin/orders}" th:classappend="${activeAdminPage == 'orders'} ? 'active' : ''">
-      <span class="admin-nav-icon"></span> Quản Lý Đơn Hàng (Thu Ngân)
+      <span class="admin-nav-icon"></span> Lịch Sử Đơn Hàng
     </a>
 
     <!-- Thực đơn (Chỉ Quản lý, Admin) -->
