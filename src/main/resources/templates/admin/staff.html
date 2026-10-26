@@ -63,14 +63,27 @@
                       th:text="${st.status == 'ACTIVE' ? '✓ Đang hoạt động' : '✕ Bị tạm khóa'}">Hoạt động</span>
               </td>
               <td style="text-align: right;">
-                <form th:if="${st.id != 1}" th:action="@{/admin/staff/toggle}" method="post" style="display: inline;">
+                <!-- Tài khoản Admin gốc (#1) -->
+                <span th:if="${st.id == 1}" style="font-size: 11px; color: var(--admin-text-muted); font-style: italic;">Quản trị gốc</span>
+
+                <!-- Tài khoản của chính người đang đăng nhập -->
+                <span th:if="${st.id != 1 and st.id == employee.id}" style="font-size: 11px; color: var(--admin-gold); font-weight: 600;">(Bạn)</span>
+
+                <!-- Manager KHÔNG có quyền khóa tài khoản ADMIN hoặc MANAGER khác -->
+                <span th:if="${st.id != 1 and st.id != employee.id and employee.roleName == 'MANAGER' and (st.roleName == 'ADMIN' or st.roleName == 'MANAGER')}" 
+                      style="font-size: 11px; color: #b9955b; font-style: italic; background: #fff8f0; padding: 2px 8px; border-radius: 4px; border: 1px solid #fae8d2;">
+                  Chỉ Admin quản lý
+                </span>
+
+                <!-- Các tài khoản hợp lệ được phép Khóa / Mở -->
+                <form th:if="${st.id != 1 and st.id != employee.id and (employee.roleName == 'ADMIN' or (employee.roleName == 'MANAGER' and st.roleName != 'ADMIN' and st.roleName != 'MANAGER'))}" 
+                      th:action="@{/admin/staff/toggle}" method="post" style="display: inline;">
                   <input type="hidden" name="id" th:value="${st.id}">
                   <button type="submit" class="btn-sm" 
                           th:classappend="${st.status == 'ACTIVE' ? 'btn-danger' : 'btn-success'}"
                           th:text="${st.status == 'ACTIVE' ? 'Khóa tài khoản' : 'Mở khóa'}"
                           onclick="return confirm('Bạn có chắc muốn đổi trạng thái tài khoản này?');"></button>
                 </form>
-                <span th:if="${st.id == 1}" style="font-size: 11px; color: var(--admin-text-muted); font-style: italic;">Quản trị gốc</span>
               </td>
             </tr>
           </tbody>
@@ -114,7 +127,8 @@
         <div>
           <label style="display: block; font-size: 11px; text-transform: uppercase; font-weight: bold; margin-bottom: 5px;">Vai trò (Role) *</label>
           <select name="roleName" required style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
-            <option value="ADMIN">ADMIN (Quản trị viên)</option>
+            <!-- Chỉ ADMIN mới có quyền tạo tài khoản role ADMIN -->
+            <option th:if="${employee.roleName == 'ADMIN'}" value="ADMIN">ADMIN (Quản trị viên)</option>
             <option value="MANAGER">MANAGER (Quản lý)</option>
             <option value="RECEPTIONIST">RECEPTIONIST (Lễ tân)</option>
             <option value="WAITER" selected>WAITER (Phục vụ bàn)</option>

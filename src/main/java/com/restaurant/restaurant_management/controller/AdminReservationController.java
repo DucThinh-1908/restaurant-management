@@ -2,6 +2,7 @@ package com.restaurant.restaurant_management.controller;
 
 import com.restaurant.restaurant_management.model.DiningTable;
 import com.restaurant.restaurant_management.model.Employee;
+import com.restaurant.restaurant_management.model.Reservation;
 import com.restaurant.restaurant_management.service.ReservationService;
 import com.restaurant.restaurant_management.service.TableService;
 import jakarta.servlet.http.HttpSession;
@@ -31,6 +32,9 @@ public class AdminReservationController {
     public String listReservations(HttpSession session, Model model) {
         Employee emp = (Employee) session.getAttribute("loggedInEmployee");
         if (emp == null) return "redirect:/admin/login";
+        if ("WAITER".equalsIgnoreCase(emp.getRoleName())) {
+            return "redirect:/admin/waiter";
+        }
 
         model.addAttribute("activeAdminPage", "reservations");
         model.addAttribute("pageTitle", "Bàn Làm Việc Lễ Tân - Quản Lý Đặt Bàn | GoD Admin");
@@ -49,25 +53,34 @@ public class AdminReservationController {
         Employee emp = (Employee) session.getAttribute("loggedInEmployee");
         if (emp == null) return "redirect:/admin/login";
 
-        String tableName = null;
+        Optional<Reservation> existingRes = reservationService.findById(id);
+
+        DiningTable targetTable = null;
         if (tableId != null) {
-            Optional<DiningTable> tableOpt = tableService.findById(tableId);
-            if (tableOpt.isPresent()) {
-                tableName = tableOpt.get().getTableNumber();
-                if ("CONFIRMED".equalsIgnoreCase(status)) {
-                    tableService.updateStatus(tableId, "RESERVED");
-                } else if ("SEATED".equalsIgnoreCase(status)) {
-                    tableService.updateStatus(tableId, "OCCUPIED");
-                }
+            targetTable = tableService.findById(tableId).orElse(null);
+        } else if (existingRes.isPresent() && existingRes.get().getAssignedTableNumber() != null) {
+            targetTable = tableService.findByTableNumber(existingRes.get().getAssignedTableNumber()).orElse(null);
+        }
+
+        String tableName = null;
+        if (targetTable != null) {
+            tableName = targetTable.getTableNumber();
+            if ("CONFIRMED".equalsIgnoreCase(status)) {
+                tableService.updateStatus(targetTable.getId(), "RESERVED");
+            } else if ("SEATED".equalsIgnoreCase(status)) {
+                tableService.updateStatus(targetTable.getId(), "OCCUPIED");
+            } else if ("CANCELLED".equalsIgnoreCase(status) || "COMPLETED".equalsIgnoreCase(status)) {
+                tableService.updateStatus(targetTable.getId(), "AVAILABLE");
             }
         }
 
         // Ghi nhận Lễ tân phụ trách duyệt đơn này
         String handledByName = emp.getFullName() + " (" + emp.getRoleName() + ")";
-        reservationService.updateReservation(id, status, tableName, handledByName);
+        reservationService.updateReservation(id, status, tableName, emp.getId(), handledByName);
 
         redirectAttributes.addFlashAttribute("successMessage", 
-                "Lễ tân " + emp.getFullName() + " đã cập nhật yêu cầu đặt bàn #" + id + " sang trạng thái '" + status + "' thành công!");
+                "Lễ tân " + emp.getFullName() + " đã cập nhật yêu cầu đặt bàn #" + id + 
+                (tableName != null ? " (Bàn " + tableName + ")" : "") + " sang trạng thái '" + status + "' thành công!");
         return "redirect:/admin/reservations";
     }
 

@@ -79,7 +79,7 @@
               </td>
               <td>
                 <span class="badge-status"
-                      th:classappend="${res.status == 'CONFIRMED' ? 'status-completed' : (res.status == 'SEATED' ? 'status-serving' : (res.status == 'CANCELLED' ? 'status-cancelled' : 'status-pending'))}"
+                      th:classappend="${res.status == 'CONFIRMED' ? 'status-completed' : (res.status == 'SEATED' ? 'status-serving' : (res.status == 'COMPLETED' ? 'status-available' : (res.status == 'CANCELLED' ? 'status-cancelled' : 'status-pending')))}"
                       th:text="${res.statusDisplayName}">Chờ duyệt</span>
               </td>
               <td>
@@ -106,11 +106,21 @@
                   <form th:if="${res.status == 'CONFIRMED'}" th:action="@{/admin/reservations/update-status}" method="post">
                     <input type="hidden" name="id" th:value="${res.id}">
                     <input type="hidden" name="status" value="SEATED">
-                    <button type="submit" class="btn-sm btn-gold" style="font-size: 11px; padding: 4px 8px;">🍽 Đón vào bàn</button>
+                    <button type="submit" class="btn-sm btn-gold" style="font-size: 11px; padding: 4px 8px;"
+                            th:title="'Đón khách vào bàn ' + ${res.assignedTableNumber ?: ''}">
+                       Đón vào bàn <span th:if="${res.assignedTableNumber != null}" th:text="'(' + ${res.assignedTableNumber} + ')'"></span>
+                    </button>
+                  </form>
+
+                  <!-- Khách dùng bữa xong -> Lễ tân giải phóng bàn -->
+                  <form th:if="${res.status == 'SEATED'}" th:action="@{/admin/reservations/update-status}" method="post">
+                    <input type="hidden" name="id" th:value="${res.id}">
+                    <input type="hidden" name="status" value="COMPLETED">
+                    <button type="submit" class="btn-sm btn-success" style="font-size: 11px; padding: 4px 8px;" title="Khách dùng bữa xong, chuyển bàn về trạng thái Trống">✓ Trả bàn</button>
                   </form>
 
                   <!-- Hủy đặt bàn -->
-                  <form th:if="${res.status != 'CANCELLED' and res.status != 'SEATED'}" th:action="@{/admin/reservations/update-status}" method="post">
+                  <form th:if="${res.status != 'CANCELLED' and res.status != 'SEATED' and res.status != 'COMPLETED'}" th:action="@{/admin/reservations/update-status}" method="post">
                     <input type="hidden" name="id" th:value="${res.id}">
                     <input type="hidden" name="status" value="CANCELLED">
                     <button type="submit" class="btn-sm btn-danger" onclick="return confirm('Xác nhận hủy yêu cầu đặt bàn này?');">Hủy</button>
