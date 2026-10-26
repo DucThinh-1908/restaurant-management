@@ -28,6 +28,9 @@ public class AdminInventoryController {
     public String listInventory(HttpSession session, Model model) {
         Employee emp = (Employee) session.getAttribute("loggedInEmployee");
         if (emp == null) return "redirect:/admin/login";
+        if (!"STOREKEEPER".equalsIgnoreCase(emp.getRoleName()) && !"ADMIN".equalsIgnoreCase(emp.getRoleName()) && !"MANAGER".equalsIgnoreCase(emp.getRoleName())) {
+            return "redirect:/admin/kitchen";
+        }
 
         model.addAttribute("activeAdminPage", "inventory");
         model.addAttribute("pageTitle", "Quản Lý Kho Nguyên Liệu | GoD Admin");
