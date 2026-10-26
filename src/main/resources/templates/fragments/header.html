@@ -19,14 +19,14 @@
     <div class="header-user-actions">
       <!-- Icon Giỏ Hàng -->
       <a th:href="@{/cart}" class="cart-btn" aria-label="Giỏ hàng">
-        <span>🛒 GIỎ HÀNG</span>
+        <span> GIỎ HÀNG</span>
         <span class="cart-badge" th:text="${cartItemCount ?: 0}">0</span>
       </a>
 
       <!-- Nếu khách đã đăng nhập -->
       <div th:if="${loggedInCustomer != null}" class="user-dropdown">
         <a th:href="@{/my-account}" class="user-greeting">
-          <span class="user-avatar">👤</span>
+          <span class="user-avatar"></span>
           <span th:text="${loggedInCustomer.fullName}">Khách Hàng</span>
         </a>
         <div class="dropdown-content">
