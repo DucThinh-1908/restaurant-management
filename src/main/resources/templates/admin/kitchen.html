@@ -118,10 +118,14 @@
 
               <!-- Danh sách món -->
               <ul class="kds-dish-list">
-                <li th:each="item : ${order.items}" class="kds-dish-item">
+                <li th:each="item : ${order.items}" class="kds-dish-item"
+                    th:style="${item.status == 'SERVED' ? 'opacity: 0.5; background: #f1f5f9;' : ''}">
                   <div style="flex: 1;">
                     <span class="kds-dish-qty" th:text="${item.quantity} + 'x'">1x</span>
-                    <strong th:text="${item.itemName}" style="font-size: 14px;">Bò sốt tiêu đen</strong>
+                    <strong th:text="${item.itemName}" style="font-size: 14px;"
+                            th:style="${item.status == 'SERVED' ? 'text-decoration: line-through; color: #64748b;' : ''}">Bò sốt tiêu đen</strong>
+                    <span th:if="${item.status == 'PENDING'}" class="badge" style="background: #fef3c7; color: #92400e; font-size: 10px; margin-left: 6px; font-weight: 700;"> MỚI GỌI</span>
+                    <span th:if="${item.status == 'SERVED'}" class="badge" style="background: #e2e8f0; color: #475569; font-size: 10px; margin-left: 6px;">✓ ĐÃ LÊN BÀN</span>
                     <div th:if="${item.note != null and not #strings.isEmpty(item.note)}" 
                          class="kds-dish-note" th:text="'Yêu cầu: ' + ${item.note}">
                     </div>
@@ -174,10 +178,15 @@
 
               <!-- Danh sách món -->
               <ul class="kds-dish-list">
-                <li th:each="item : ${order.items}" class="kds-dish-item">
+                <li th:each="item : ${order.items}" class="kds-dish-item"
+                    th:style="${item.status == 'SERVED' ? 'opacity: 0.5; background: #f1f5f9;' : ''}">
                   <div style="flex: 1;">
                     <span class="kds-dish-qty" th:text="${item.quantity} + 'x'">1x</span>
-                    <strong th:text="${item.itemName}" style="font-size: 14px;">Gà nướng than hoa</strong>
+                    <strong th:text="${item.itemName}" style="font-size: 14px;"
+                            th:style="${item.status == 'SERVED' ? 'text-decoration: line-through; color: #64748b;' : ''}">Gà nướng than hoa</strong>
+                    <span th:if="${item.status == 'COOKING'}" class="badge" style="background: #e0f2fe; color: #0369a1; font-size: 10px; margin-left: 6px; font-weight: 700;"> ĐANG NẤU</span>
+                    <span th:if="${item.status == 'PENDING'}" class="badge" style="background: #fef3c7; color: #92400e; font-size: 10px; margin-left: 6px; font-weight: 700;"> CHỜ NẤU</span>
+                    <span th:if="${item.status == 'SERVED'}" class="badge" style="background: #e2e8f0; color: #475569; font-size: 10px; margin-left: 6px;">✓ ĐÃ LÊN BÀN</span>
                     <div th:if="${item.note != null and not #strings.isEmpty(item.note)}" 
                          class="kds-dish-note" th:text="'Yêu cầu: ' + ${item.note}">
                     </div>
@@ -224,12 +233,15 @@
 
               <!-- Danh sách món -->
               <ul class="kds-dish-list">
-                <li th:each="item : ${order.items}" class="kds-dish-item">
+                <li th:each="item : ${order.items}" class="kds-dish-item"
+                    th:style="${item.status == 'SERVED' ? 'opacity: 0.5; background: #f1f5f9;' : ''}">
                   <div style="flex: 1;">
                     <span class="kds-dish-qty" th:text="${item.quantity} + 'x'">1x</span>
-                    <span th:text="${item.itemName}" style="font-size: 13px; font-weight: 600;">Cá chẽm áp chảo</span>
+                    <span th:text="${item.itemName}" style="font-size: 13px; font-weight: 600;"
+                          th:style="${item.status == 'SERVED' ? 'text-decoration: line-through; color: #64748b;' : ''}">Cá chẽm áp chảo</span>
                   </div>
-                  <span style="font-size: 11px; color: #1f7a26; font-weight: bold;">ĐÃ XONG</span>
+                  <span th:if="${item.status != 'SERVED'}" style="font-size: 11px; color: #1f7a26; font-weight: bold;">ĐÃ XONG</span>
+                  <span th:if="${item.status == 'SERVED'}" style="font-size: 11px; color: #64748b;">ĐÃ LÊN BÀN</span>
                 </li>
               </ul>
 
