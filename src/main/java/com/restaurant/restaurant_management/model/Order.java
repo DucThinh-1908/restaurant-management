@@ -10,12 +10,13 @@ public class Order {
     private Long id;
     private String orderCode;
     private String orderType = "DELIVERY"; // DINE_IN, TAKE_AWAY, DELIVERY
+    private String tableNumber; // Ví dụ: T1-01, T1-03, VIP-01 (khi là DINE_IN)
     private Long customerId;
     private String customerName;
     private String customerPhone;
     private String deliveryAddress;
     private String note;
-    private String status = "PENDING"; // PENDING, SERVING, COMPLETED, CANCELLED
+    private String status = "PENDING"; // PENDING, COOKING, SERVING, COMPLETED, CANCELLED
     private BigDecimal subtotal = BigDecimal.ZERO;
     private BigDecimal discount = BigDecimal.ZERO;
     private BigDecimal taxPercent = new BigDecimal("8.00");
@@ -33,16 +34,24 @@ public class Order {
         return createdAt.format(DateTimeFormatter.ofPattern("HH:mm - dd/MM/yyyy"));
     }
 
+    public long getMinutesWaiting() {
+        if (createdAt == null) return 0;
+        long minutes = java.time.Duration.between(createdAt, LocalDateTime.now()).toMinutes();
+        return Math.max(0, minutes);
+    }
+
     public String getStatusBadgeClass() {
         if ("COMPLETED".equalsIgnoreCase(status)) return "badge-success";
-        if ("SERVING".equalsIgnoreCase(status)) return "badge-warning";
+        if ("COOKING".equalsIgnoreCase(status)) return "badge-warning";
+        if ("SERVING".equalsIgnoreCase(status)) return "badge-info";
         if ("CANCELLED".equalsIgnoreCase(status)) return "badge-danger";
-        return "badge-info";
+        return "badge-pending";
     }
 
     public String getStatusDisplayName() {
-        if ("PENDING".equalsIgnoreCase(status)) return "Chờ xác nhận";
-        if ("SERVING".equalsIgnoreCase(status)) return "Đang xử lý / Bếp nấu";
+        if ("PENDING".equalsIgnoreCase(status)) return "Chờ chế biến";
+        if ("COOKING".equalsIgnoreCase(status)) return "Đang nấu trên bếp";
+        if ("SERVING".equalsIgnoreCase(status)) return "Sẵn sàng phục vụ";
         if ("COMPLETED".equalsIgnoreCase(status)) return "Hoàn thành";
         if ("CANCELLED".equalsIgnoreCase(status)) return "Đã hủy";
         return status;
@@ -51,7 +60,9 @@ public class Order {
     public String getOrderTypeDisplayName() {
         if ("DELIVERY".equalsIgnoreCase(orderType)) return "Giao hàng tận nơi";
         if ("TAKE_AWAY".equalsIgnoreCase(orderType)) return "Đặt mang về";
-        if ("DINE_IN".equalsIgnoreCase(orderType)) return "Dùng tại bàn";
+        if ("DINE_IN".equalsIgnoreCase(orderType)) {
+            return tableNumber != null && !tableNumber.isBlank() ? "Bàn " + tableNumber : "Dùng tại bàn";
+        }
         return orderType;
     }
 
@@ -181,6 +192,14 @@ public class Order {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public String getTableNumber() {
+        return tableNumber;
+    }
+
+    public void setTableNumber(String tableNumber) {
+        this.tableNumber = tableNumber;
     }
 
     public List<OrderItem> getItems() {
