@@ -265,6 +265,8 @@ body.admin-body {
   border-radius: 3px;
 }
 .status-pending { background: #fff3cd; color: #856404; }
+.status-cooking { background: #e0f2fe; color: #0369a1; }
+.status-ready { background: #dcfce7; color: #15803d; }
 .status-serving, .status-occupied { background: #cce5ff; color: #004085; }
 .status-completed, .status-available { background: #d4edda; color: #155724; }
 .status-cancelled, .status-suspended { background: #f8d7da; color: #721c24; }

@@ -39,7 +39,7 @@ public class AdminKitchenController {
         // Lấy danh sách các đơn theo từng phân đoạn Bếp
         List<Order> ordersPending = orderService.getOrdersByStatus("PENDING");
         List<Order> ordersCooking = orderService.getOrdersByStatus("COOKING");
-        List<Order> ordersServing = orderService.getOrdersByStatus("SERVING");
+        List<Order> ordersReady = orderService.getOrdersByStatus("READY");
         List<Order> ordersCompleted = orderService.getOrdersByStatus("COMPLETED");
 
         // Tổng hợp hàng đợi các món đang chờ chế biến
@@ -50,12 +50,14 @@ public class AdminKitchenController {
         model.addAttribute("employee", emp);
         model.addAttribute("ordersPending", ordersPending);
         model.addAttribute("ordersCooking", ordersCooking);
-        model.addAttribute("ordersServing", ordersServing);
+        model.addAttribute("ordersReady", ordersReady);
+        model.addAttribute("ordersServing", ordersReady); // Tương thích template
         model.addAttribute("dishQueue", dishQueue);
         model.addAttribute("menuItems", menuService.getAllMenuItems());
         model.addAttribute("pendingCount", ordersPending.size());
         model.addAttribute("cookingCount", ordersCooking.size());
-        model.addAttribute("servingCount", ordersServing.size());
+        model.addAttribute("readyCount", ordersReady.size());
+        model.addAttribute("servingCount", ordersReady.size());
         model.addAttribute("completedCount", ordersCompleted.size());
 
         return "admin/kitchen";
@@ -73,8 +75,10 @@ public class AdminKitchenController {
         String message = "Đã cập nhật trạng thái đơn #" + id + " sang: ";
         if ("COOKING".equalsIgnoreCase(status)) {
             message = " Bếp đã tiếp nhận đơn #" + id + " - Bắt đầu chế biến!";
+        } else if ("READY".equalsIgnoreCase(status)) {
+            message = " Đơn #" + id + " đã nấu xong - Báo phục vụ bưng ra bàn / quầy giao khách!";
         } else if ("SERVING".equalsIgnoreCase(status)) {
-            message = " Đơn #" + id + " đã nấu xong - Báo phục vụ bưng ra bàn / giao khách!";
+            message = " Đã phục vụ ra bàn đơn #" + id + "!";
         } else if ("COMPLETED".equalsIgnoreCase(status)) {
             message = " Đã hoàn tất phục vụ đơn #" + id + "!";
         }

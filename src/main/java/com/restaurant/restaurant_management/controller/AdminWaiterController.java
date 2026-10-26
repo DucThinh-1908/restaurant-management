@@ -50,7 +50,7 @@ public class AdminWaiterController {
                     .ifPresent(order -> tableOrderMap.put(table.getId(), order));
         }
 
-        List<Order> readyOrders = orderService.getOrdersByStatus("SERVING");
+        List<Order> readyOrders = orderService.getOrdersByStatus("READY");
         List<MenuItem> menuItems = menuService.getAllMenuItems();
         Map<String, List<MenuItem>> menuByCategory = menuService.getMenuItemsGroupedByCategory();
 

@@ -47,7 +47,8 @@ public class Order {
     public String getStatusBadgeClass() {
         if ("COMPLETED".equalsIgnoreCase(status)) return "badge-success";
         if ("COOKING".equalsIgnoreCase(status)) return "badge-warning";
-        if ("SERVING".equalsIgnoreCase(status)) return "badge-info";
+        if ("READY".equalsIgnoreCase(status)) return "badge-info";
+        if ("SERVING".equalsIgnoreCase(status)) return "badge-primary";
         if ("CANCELLED".equalsIgnoreCase(status)) return "badge-danger";
         return "badge-pending";
     }
@@ -55,8 +56,9 @@ public class Order {
     public String getStatusDisplayName() {
         if ("PENDING".equalsIgnoreCase(status)) return "Chờ chế biến";
         if ("COOKING".equalsIgnoreCase(status)) return "Đang nấu trên bếp";
-        if ("SERVING".equalsIgnoreCase(status)) return "Sẵn sàng phục vụ";
-        if ("COMPLETED".equalsIgnoreCase(status)) return "Hoàn thành";
+        if ("READY".equalsIgnoreCase(status)) return "Đã nấu xong (Chờ bưng)";
+        if ("SERVING".equalsIgnoreCase(status)) return "Khách đang dùng bữa";
+        if ("COMPLETED".equalsIgnoreCase(status)) return "Đã hoàn thành";
         if ("CANCELLED".equalsIgnoreCase(status)) return "Đã hủy";
         return status;
     }

@@ -342,7 +342,7 @@
               </div>
               <div style="text-align: right;">
                 <span class="badge-status" 
-                      th:classappend="${order.status == 'SERVING' ? 'status-serving' : (order.status == 'COOKING' ? 'status-pending' : 'status-pending')}"
+                      th:classappend="${order.status == 'COMPLETED' ? 'status-completed' : (order.status == 'READY' ? 'status-ready' : (order.status == 'SERVING' ? 'status-serving' : (order.status == 'COOKING' ? 'status-cooking' : 'status-pending')))}"
                       th:text="${order.statusDisplayName}">Đang phục vụ</span>
                 <small style="display: block; color: var(--admin-text-muted); margin-top: 4px;" th:text="'Ngồi ' + ${order.minutesWaiting} + ' phút'"></small>
               </div>

@@ -188,7 +188,7 @@
               <!-- Nút hành động: Nấu xong -->
               <form th:action="@{/admin/kitchen/update-status}" method="post">
                 <input type="hidden" name="id" th:value="${order.id}">
-                <input type="hidden" name="status" value="SERVING">
+                <input type="hidden" name="status" value="READY">
                 <button type="submit" class="kds-action-btn kds-btn-finish">
                    Nấu Xong
                 </button>
@@ -202,15 +202,15 @@
           </div>
         </div>
 
-        <!-- CỘT 3: SẴN SÀNG PHỤC VỤ (SERVING) -->
+        <!-- CỘT 3: SẴN SÀNG PHỤC VỤ (READY / SERVING) -->
         <div class="kds-column kds-col-serving">
           <div class="kds-column-header">
             <span> 3. Sẵn Sàng Ra Bàn</span>
-            <span class="badge" style="background: #a3dba7; color: #164619;" th:text="${servingCount}">0</span>
+            <span class="badge" style="background: #a3dba7; color: #164619;" th:text="${readyCount != null ? readyCount : servingCount}">0</span>
           </div>
 
           <div class="kds-ticket-list">
-            <div th:each="order : ${ordersServing}" class="kds-ticket" style="border-top: 3px solid #1f7a26;">
+            <div th:each="order : ${ordersReady != null ? ordersReady : ordersServing}" class="kds-ticket" style="border-top: 3px solid #1f7a26;">
               
               <div class="kds-ticket-head">
                 <div>
@@ -236,7 +236,7 @@
               <!-- Nút hành động: Phục vụ xong -->
               <form th:action="@{/admin/kitchen/update-status}" method="post">
                 <input type="hidden" name="id" th:value="${order.id}">
-                <input type="hidden" name="status" value="COMPLETED">
+                <input type="hidden" name="status" th:value="${order.orderType == 'DINE_IN' ? 'SERVING' : 'COMPLETED'}">
                 <button type="submit" class="kds-action-btn kds-btn-served">
                    Đã Phục Vụ Khách
                 </button>

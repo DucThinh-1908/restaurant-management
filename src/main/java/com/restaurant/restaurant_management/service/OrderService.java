@@ -203,7 +203,8 @@ public class OrderService {
                 // Cập nhật trạng thái các món chi tiết
                 String itemStatus = "COMPLETED".equalsIgnoreCase(status) ? "SERVED" :
                                    ("SERVING".equalsIgnoreCase(status) ? "SERVED" :
-                                   ("COOKING".equalsIgnoreCase(status) ? "COOKING" : "PENDING"));
+                                   ("READY".equalsIgnoreCase(status) ? "COOKING" :
+                                   ("COOKING".equalsIgnoreCase(status) ? "COOKING" : "PENDING")));
                 jdbcTemplate.update("UPDATE order_items SET status = ? WHERE order_id = ?", itemStatus, orderId);
             } catch (Exception e) {
                 System.err.println("Lỗi cập nhật order #" + orderId + " trong MySQL: " + e.getMessage());
@@ -470,7 +471,7 @@ public class OrderService {
                              "FROM orders o " +
                              "LEFT JOIN dining_tables t ON o.table_id = t.id " +
                              "LEFT JOIN customers c ON o.customer_id = c.id " +
-                             "WHERE o.table_id = ? AND o.status IN ('PENDING', 'COOKING', 'SERVING') " +
+                             "WHERE o.table_id = ? AND o.status IN ('PENDING', 'COOKING', 'READY', 'SERVING') " +
                              "ORDER BY o.id DESC LIMIT 1";
                 List<Order> list = jdbcTemplate.query(sql, (rs, rowNum) -> mapRowToOrder(rs), tableId);
                 if (!list.isEmpty()) {
@@ -676,7 +677,7 @@ public class OrderService {
                              "FROM orders o " +
                              "LEFT JOIN dining_tables t ON o.table_id = t.id " +
                              "LEFT JOIN customers c ON o.customer_id = c.id " +
-                             "WHERE o.status IN ('PENDING', 'COOKING', 'SERVING') " +
+                             "WHERE o.status IN ('PENDING', 'COOKING', 'READY', 'SERVING') " +
                              "ORDER BY CASE WHEN o.order_type = 'DINE_IN' THEN 0 ELSE 1 END, o.id DESC";
                 List<Order> result = jdbcTemplate.query(sql, (rs, rowNum) -> mapRowToOrder(rs));
                 attachItems(result);
@@ -820,7 +821,7 @@ public class OrderService {
                 Long cCount = jdbcTemplate.queryForObject(countSql, Long.class);
                 if (cCount != null) completedCount = cCount;
 
-                String activeSql = "SELECT COUNT(*) FROM orders WHERE status IN ('PENDING', 'COOKING', 'SERVING')";
+                String activeSql = "SELECT COUNT(*) FROM orders WHERE status IN ('PENDING', 'COOKING', 'READY', 'SERVING')";
                 Long aCount = jdbcTemplate.queryForObject(activeSql, Long.class);
                 if (aCount != null) activeCount = aCount;
             } catch (Exception e) {

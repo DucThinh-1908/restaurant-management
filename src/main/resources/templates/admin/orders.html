@@ -73,7 +73,7 @@
               </td>
               <td>
                 <span class="badge-status" 
-                      th:classappend="${order.status == 'COMPLETED' ? 'status-completed' : (order.status == 'SERVING' ? 'status-serving' : (order.status == 'CANCELLED' ? 'status-cancelled' : 'status-pending'))}"
+                      th:classappend="${order.status == 'COMPLETED' ? 'status-completed' : (order.status == 'READY' ? 'status-ready' : (order.status == 'SERVING' ? 'status-serving' : (order.status == 'COOKING' ? 'status-cooking' : (order.status == 'CANCELLED' ? 'status-cancelled' : 'status-pending'))))}"
                       th:text="${order.statusDisplayName}">Chờ xử lý</span>
               </td>
               <td style="text-align: right;">
