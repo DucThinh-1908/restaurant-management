@@ -191,8 +191,8 @@ CREATE TABLE IF NOT EXISTS orders (
     delivery_address VARCHAR(255) NULL COMMENT 'Địa chỉ nhận hàng (nếu là DELIVERY)',
     contact_phone VARCHAR(20) NULL COMMENT 'Số điện thoại nhận hàng của khách',
     customer_count INT NOT NULL DEFAULT 1 COMMENT 'Số lượng khách thực tế tại bàn',
-    status ENUM('PENDING', 'SERVING', 'COMPLETED', 'CANCELLED') DEFAULT 'SERVING'
-        COMMENT 'Trạng thái order: Đang chờ (PENDING cho đơn online), Đang phục vụ/chế biến, Hoàn thành, Đã hủy',
+    status ENUM('PENDING', 'COOKING', 'READY', 'SERVING', 'COMPLETED', 'CANCELLED') DEFAULT 'PENDING'
+        COMMENT 'Trạng thái order: PENDING (Chờ chế biến), COOKING (Đang nấu), READY (Bếp nấu xong/Chờ bưng), SERVING (Khách đang dùng bữa), COMPLETED, CANCELLED',
     subtotal DECIMAL(12, 2) NOT NULL DEFAULT 0.00 COMMENT 'Tổng tiền món (Service tính từ chi tiết món)',
     discount DECIMAL(12, 2) NOT NULL DEFAULT 0.00 COMMENT 'Giảm giá (VND) - không vượt quá subtotal',
     tax_percent DECIMAL(5, 2) NOT NULL DEFAULT 8.00 COMMENT 'Tỷ lệ thuế VAT (% từ 0 đến 100)',
