@@ -42,9 +42,11 @@ public class AdminDashboardController {
         if ("RECEPTIONIST".equalsIgnoreCase(role)) {
             return "redirect:/admin/reservations";
         } else if ("WAITER".equalsIgnoreCase(role)) {
-            return "redirect:/admin/tables";
-        } else if ("CHEF".equalsIgnoreCase(role) || "CASHIER".equalsIgnoreCase(role)) {
-            return "redirect:/admin/orders";
+            return "redirect:/admin/waiter";
+        } else if ("CHEF".equalsIgnoreCase(role)) {
+            return "redirect:/admin/kitchen";
+        } else if ("CASHIER".equalsIgnoreCase(role)) {
+            return "redirect:/admin/cashier";
         } else if ("STOREKEEPER".equalsIgnoreCase(role)) {
             return "redirect:/admin/inventory";
         }
