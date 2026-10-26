@@ -65,12 +65,41 @@ public class OrderService {
         order.setTaxPercent(rs.getBigDecimal("tax_percent"));
         order.setTaxAmount(rs.getBigDecimal("tax_amount"));
         order.setTotalAmount(rs.getBigDecimal("total_amount"));
-        order.setTableNumber(rs.getString("table_number"));
+
+        try {
+            long tId = rs.getLong("table_id");
+            if (!rs.wasNull()) order.setTableId(tId);
+        } catch (SQLException ignored) {}
+
+        try {
+            order.setTableNumber(rs.getString("table_number"));
+        } catch (SQLException ignored) {}
 
         Timestamp ts = rs.getTimestamp("created_at");
         if (ts != null) {
             order.setCreatedAt(ts.toLocalDateTime());
         }
+
+        try {
+            Timestamp cts = rs.getTimestamp("completed_at");
+            if (cts != null) order.setCompletedAt(cts.toLocalDateTime());
+        } catch (SQLException ignored) {}
+
+        try {
+            String pm = rs.getString("payment_method");
+            if (pm != null) order.setPaymentMethod(pm);
+        } catch (SQLException ignored) {}
+
+        try {
+            String cn = rs.getString("cashier_name");
+            if (cn != null) order.setCashierName(cn);
+        } catch (SQLException ignored) {}
+
+        try {
+            String tc = rs.getString("transaction_code");
+            if (tc != null) order.setTransactionCode(tc);
+        } catch (SQLException ignored) {}
+
         return order;
     }
 
@@ -629,5 +658,182 @@ public class OrderService {
                 System.err.println("Lỗi clearTable: " + e.getMessage());
             }
         }
+    }
+
+    // -------------------------------------------------------------
+    // NGHIỆP VỤ THU NGÂN (POS & THANH TOÁN HÓA ĐƠN)
+    // -------------------------------------------------------------
+
+    public synchronized List<Order> getActiveOrdersForCashier() {
+        if (jdbcTemplate != null) {
+            try {
+                String sql = "SELECT o.id, o.order_code, o.order_type, o.table_id, o.customer_id, " +
+                             "COALESCE(c.full_name, 'Khách vãng lai') AS customer_name, " +
+                             "COALESCE(c.phone, o.contact_phone) AS customer_phone, " +
+                             "o.delivery_address, o.note, o.status, " +
+                             "o.subtotal, o.discount, o.tax_percent, o.tax_amount, o.total_amount, " +
+                             "o.created_at, o.completed_at, t.table_number " +
+                             "FROM orders o " +
+                             "LEFT JOIN dining_tables t ON o.table_id = t.id " +
+                             "LEFT JOIN customers c ON o.customer_id = c.id " +
+                             "WHERE o.status IN ('PENDING', 'COOKING', 'SERVING') " +
+                             "ORDER BY CASE WHEN o.order_type = 'DINE_IN' THEN 0 ELSE 1 END, o.id DESC";
+                List<Order> result = jdbcTemplate.query(sql, (rs, rowNum) -> mapRowToOrder(rs));
+                attachItems(result);
+                return result;
+            } catch (Exception e) {
+                System.err.println("Lỗi getActiveOrdersForCashier: " + e.getMessage());
+            }
+        }
+        return inMemoryOrders.stream()
+                .filter(o -> !"COMPLETED".equalsIgnoreCase(o.getStatus()) && !"CANCELLED".equalsIgnoreCase(o.getStatus()))
+                .collect(Collectors.toList());
+    }
+
+    public synchronized List<Order> getCompletedOrdersToday() {
+        if (jdbcTemplate != null) {
+            try {
+                String sql = "SELECT o.id, o.order_code, o.order_type, o.table_id, o.customer_id, " +
+                             "COALESCE(c.full_name, 'Khách vãng lai') AS customer_name, " +
+                             "COALESCE(c.phone, o.contact_phone) AS customer_phone, " +
+                             "o.delivery_address, o.note, o.status, " +
+                             "o.subtotal, o.discount, o.tax_percent, o.tax_amount, o.total_amount, " +
+                             "o.created_at, o.completed_at, t.table_number, " +
+                             "p.payment_method, p.transaction_code, e.full_name AS cashier_name " +
+                             "FROM orders o " +
+                             "LEFT JOIN dining_tables t ON o.table_id = t.id " +
+                             "LEFT JOIN customers c ON o.customer_id = c.id " +
+                             "LEFT JOIN payments p ON p.order_id = o.id " +
+                             "LEFT JOIN employees e ON p.cashier_id = e.id " +
+                             "WHERE o.status = 'COMPLETED' " +
+                             "ORDER BY o.completed_at DESC LIMIT 50";
+                List<Order> result = jdbcTemplate.query(sql, (rs, rowNum) -> mapRowToOrder(rs));
+                attachItems(result);
+                return result;
+            } catch (Exception e) {
+                System.err.println("Lỗi getCompletedOrdersToday: " + e.getMessage());
+            }
+        }
+        return inMemoryOrders.stream()
+                .filter(o -> "COMPLETED".equalsIgnoreCase(o.getStatus()))
+                .collect(Collectors.toList());
+    }
+
+    public synchronized boolean checkoutOrder(Long orderId, Long cashierId, String paymentMethod, BigDecimal discount, String transactionCode) {
+        if (orderId == null) return false;
+        if (paymentMethod == null || paymentMethod.isBlank()) paymentMethod = "CASH";
+        if (discount == null || discount.compareTo(BigDecimal.ZERO) < 0) discount = BigDecimal.ZERO;
+
+        if (jdbcTemplate != null) {
+            try {
+                // 1. Tính toán lại tổng tiền từ chi tiết món
+                String sumSql = "SELECT COALESCE(SUM(quantity * unit_price), 0) FROM order_items WHERE order_id = ? AND status != 'CANCELLED'";
+                BigDecimal subtotal = jdbcTemplate.queryForObject(sumSql, BigDecimal.class, orderId);
+                if (subtotal == null) subtotal = BigDecimal.ZERO;
+
+                if (discount.compareTo(subtotal) > 0) {
+                    discount = subtotal;
+                }
+
+                BigDecimal afterDiscount = subtotal.subtract(discount);
+                BigDecimal taxAmount = afterDiscount.multiply(new BigDecimal("0.08")).setScale(0, RoundingMode.HALF_UP);
+                BigDecimal totalAmount = afterDiscount.add(taxAmount);
+
+                // 2. Cập nhật đơn hàng sang COMPLETED
+                String updateOrderSql = "UPDATE orders SET status = 'COMPLETED', subtotal = ?, discount = ?, " +
+                                        "tax_amount = ?, total_amount = ?, completed_at = NOW() WHERE id = ?";
+                jdbcTemplate.update(updateOrderSql, subtotal, discount, taxAmount, totalAmount, orderId);
+
+                // Đánh dấu toàn bộ món trong đơn là SERVED
+                jdbcTemplate.update("UPDATE order_items SET status = 'SERVED' WHERE order_id = ? AND status != 'CANCELLED'", orderId);
+
+                // 3. Ghi nhận thanh toán vào bảng payments
+                String paymentSql = "INSERT INTO payments (order_id, cashier_id, amount, payment_method, transaction_code, paid_at) " +
+                                    "VALUES (?, ?, ?, ?, ?, NOW()) " +
+                                    "ON DUPLICATE KEY UPDATE cashier_id = VALUES(cashier_id), amount = VALUES(amount), " +
+                                    "payment_method = VALUES(payment_method), transaction_code = VALUES(transaction_code), paid_at = NOW()";
+                jdbcTemplate.update(paymentSql, orderId, cashierId, totalAmount, paymentMethod, transactionCode);
+
+                // 4. Giải phóng bàn ăn và cập nhật đặt bàn nếu có
+                List<Integer> tableIds = jdbcTemplate.query("SELECT table_id FROM orders WHERE id = ?", (rs, rowNum) -> rs.getInt("table_id"), orderId);
+                if (!tableIds.isEmpty() && tableIds.get(0) != null) {
+                    Integer tableId = tableIds.get(0);
+                    jdbcTemplate.update("UPDATE dining_tables SET status = 'AVAILABLE' WHERE id = ?", tableId);
+                    jdbcTemplate.update("UPDATE reservations SET status = 'COMPLETED' WHERE table_id = ? AND status = 'SEATED'", tableId);
+                }
+
+                // 5. Tích điểm thành viên nếu có (10.000đ = 1 điểm)
+                List<Integer> custIds = jdbcTemplate.query("SELECT customer_id FROM orders WHERE id = ?", (rs, rowNum) -> rs.getInt("customer_id"), orderId);
+                if (!custIds.isEmpty() && custIds.get(0) != null) {
+                    int pointsEarned = totalAmount.divide(BigDecimal.valueOf(10000), 0, RoundingMode.FLOOR).intValue();
+                    customerService.addLoyaltyPoints((long) custIds.get(0), pointsEarned);
+                }
+
+                return true;
+            } catch (Exception e) {
+                System.err.println("Lỗi checkoutOrder trong MySQL: " + e.getMessage());
+                e.printStackTrace();
+            }
+        }
+
+        // In-memory fallback
+        Optional<Order> orderOpt = getOrderById(orderId);
+        if (orderOpt.isPresent()) {
+            Order o = orderOpt.get();
+            o.setStatus("COMPLETED");
+            o.setDiscount(discount);
+            o.setPaymentMethod(paymentMethod);
+            o.setCompletedAt(LocalDateTime.now());
+            return true;
+        }
+        return false;
+    }
+
+    public synchronized Map<String, Object> getCashierStatsToday() {
+        Map<String, Object> stats = new HashMap<>();
+        BigDecimal totalRevenue = BigDecimal.ZERO;
+        BigDecimal cashRevenue = BigDecimal.ZERO;
+        BigDecimal transferRevenue = BigDecimal.ZERO;
+        BigDecimal cardRevenue = BigDecimal.ZERO;
+        long completedCount = 0;
+        long activeCount = 0;
+
+        if (jdbcTemplate != null) {
+            try {
+                String revSql = "SELECT COALESCE(SUM(amount), 0) FROM payments WHERE DATE(paid_at) = CURRENT_DATE()";
+                totalRevenue = jdbcTemplate.queryForObject(revSql, BigDecimal.class);
+                if (totalRevenue == null) totalRevenue = BigDecimal.ZERO;
+
+                String cashSql = "SELECT COALESCE(SUM(amount), 0) FROM payments WHERE payment_method = 'CASH' AND DATE(paid_at) = CURRENT_DATE()";
+                cashRevenue = jdbcTemplate.queryForObject(cashSql, BigDecimal.class);
+                if (cashRevenue == null) cashRevenue = BigDecimal.ZERO;
+
+                String transSql = "SELECT COALESCE(SUM(amount), 0) FROM payments WHERE payment_method = 'BANK_TRANSFER' AND DATE(paid_at) = CURRENT_DATE()";
+                transferRevenue = jdbcTemplate.queryForObject(transSql, BigDecimal.class);
+                if (transferRevenue == null) transferRevenue = BigDecimal.ZERO;
+
+                String cardSql = "SELECT COALESCE(SUM(amount), 0) FROM payments WHERE payment_method = 'CREDIT_CARD' AND DATE(paid_at) = CURRENT_DATE()";
+                cardRevenue = jdbcTemplate.queryForObject(cardSql, BigDecimal.class);
+                if (cardRevenue == null) cardRevenue = BigDecimal.ZERO;
+
+                String countSql = "SELECT COUNT(*) FROM orders WHERE status = 'COMPLETED' AND DATE(completed_at) = CURRENT_DATE()";
+                Long cCount = jdbcTemplate.queryForObject(countSql, Long.class);
+                if (cCount != null) completedCount = cCount;
+
+                String activeSql = "SELECT COUNT(*) FROM orders WHERE status IN ('PENDING', 'COOKING', 'SERVING')";
+                Long aCount = jdbcTemplate.queryForObject(activeSql, Long.class);
+                if (aCount != null) activeCount = aCount;
+            } catch (Exception e) {
+                System.err.println("Lỗi getCashierStatsToday: " + e.getMessage());
+            }
+        }
+
+        stats.put("totalRevenueToday", totalRevenue);
+        stats.put("cashRevenueToday", cashRevenue);
+        stats.put("transferRevenueToday", transferRevenue);
+        stats.put("cardRevenueToday", cardRevenue);
+        stats.put("completedCountToday", completedCount);
+        stats.put("activeCount", activeCount);
+        return stats;
     }
 }
