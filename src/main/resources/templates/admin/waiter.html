@@ -1,0 +1,571 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title th:text="${pageTitle}">Trực Bàn &amp; Phục Vụ | GoD Waiter</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Plus+Jakarta+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body class="admin-body">
+
+<div class="admin-layout">
+  <!-- Sidebar -->
+  <aside th:replace="~{admin/fragments/sidebar :: sidebar(${activeAdminPage})}"></aside>
+
+  <!-- Main Content -->
+  <div class="admin-main">
+    <header class="admin-topbar">
+      <div>
+        <h1 style="display: flex; align-items: center; gap: 10px;">
+          <span></span> Bàn Làm Việc Phục Vụ (Waiter Desk)
+        </h1>
+        <small style="color: var(--admin-text-muted);">Quản lý trạng thái bàn, gọi món tại bàn, theo dõi chế biến và tiếp nhận món ăn từ Bếp</small>
+      </div>
+
+      <div style="display: flex; gap: 12px; align-items: center;">
+        <button type="button" class="btn-sm" onclick="switchTab('runner')" style="background: #fff; padding: 8px 14px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--admin-line);">
+          <span></span> Món Chờ Ra Bàn
+          <span th:if="${readyCount > 0}" class="badge-pill" th:text="${readyCount}" style="background: #c93b2b; color: #fff; padding: 2px 8px; border-radius: 12px; font-size: 11px;">1</span>
+        </button>
+      </div>
+    </header>
+
+    <div class="admin-content">
+
+      <!-- Thông báo kết quả thao tác -->
+      <div th:if="${successMessage}" style="background: #edf7ed; color: #1e4620; padding: 14px 18px; border-radius: 4px; margin-bottom: 22px; border: 1px solid #c2e2c4; font-weight: 500;">
+        <span th:text="${successMessage}"></span>
+      </div>
+      <div th:if="${errorMessage}" style="background: #fdf2f2; color: #991b1b; padding: 14px 18px; border-radius: 4px; margin-bottom: 22px; border: 1px solid #f87171; font-weight: 500;">
+        <span th:text="${errorMessage}"></span>
+      </div>
+
+      <!-- THANH THỐNG KÊ NHANH TRONG CA LÀM VIỆC -->
+      <div class="waiter-stats-bar">
+        <div class="waiter-stat-card">
+          <div>
+            <div style="font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--admin-text-muted);">Bàn Trống Đón Khách</div>
+            <strong style="font-size: 26px; color: #1f7a26;" th:text="${availableCount}">5</strong>
+          </div>
+          <span style="font-size: 28px;"></span>
+        </div>
+
+        <div class="waiter-stat-card">
+          <div>
+            <div style="font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--admin-text-muted);">Bàn Đang Phục Vụ</div>
+            <strong style="font-size: 26px; color: #c93b2b;" th:text="${occupiedCount}">2</strong>
+          </div>
+          <span style="font-size: 28px;"></span>
+        </div>
+
+        <div class="waiter-stat-card">
+          <div>
+            <div style="font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--admin-text-muted);">Bàn Đã Đặt Trước</div>
+            <strong style="font-size: 26px; color: #d97706;" th:text="${reservedCount}">1</strong>
+          </div>
+          <span style="font-size: 28px;"></span>
+        </div>
+
+        <div class="waiter-stat-card" th:classappend="${readyCount > 0} ? 'alert-pulse' : ''">
+          <div>
+            <div style="font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: ${readyCount > 0 ? '#c93b2b' : 'var(--admin-text-muted)'}; font-weight: bold;">Món Bếp Đã Nấu Xong</div>
+            <strong style="font-size: 26px; color: #c93b2b;" th:text="${readyCount}">1</strong>
+          </div>
+          <span style="font-size: 28px;"></span>
+        </div>
+      </div>
+
+      <!-- TABS CHUYỂN ĐỔI NGHIỆP VỤ PHỤC VỤ -->
+      <div class="waiter-tabs">
+        <button type="button" class="waiter-tab-btn active" id="tab-btn-tables" onclick="switchTab('tables')">
+          <span></span> Sơ Đồ Bàn &amp; Trực Bàn
+        </button>
+        <button type="button" class="waiter-tab-btn" id="tab-btn-runner" onclick="switchTab('runner')">
+          <span></span> Trạm Ra Món (Bưng Món Ra Bàn)
+          <span th:if="${readyCount > 0}" class="badge-pill" th:text="${readyCount}">1</span>
+        </button>
+        <button type="button" class="waiter-tab-btn" id="tab-btn-reservations" onclick="switchTab('reservations')">
+          <span></span> Lịch Đặt Bàn Trong Ngày
+        </button>
+      </div>
+
+      <!-- ========================================================
+           TAB 1: SƠ ĐỒ BÀN & QUẢN LÝ BÀN ĂN
+           ======================================================== -->
+      <div id="tab-content-tables">
+        <!-- BỘ LỌC KHU VỰC -->
+        <div class="waiter-filter-bar">
+          <div class="filter-btn-group">
+            <button type="button" class="filter-btn active" onclick="filterTables('ALL', this)">Tất Cả Khu Vực</button>
+            <button type="button" class="filter-btn" onclick="filterTables('Tầng 1', this)">Tầng 1 - Sảnh chính</button>
+            <button type="button" class="filter-btn" onclick="filterTables('Tầng 2', this)">Tầng 2 - Ban công</button>
+            <button type="button" class="filter-btn" onclick="filterTables('VIP', this)">Phòng VIP Hoàng Gia</button>
+          </div>
+          <div style="font-size: 12px; color: var(--admin-text-muted);">
+            Nhấn vào bàn để Mở bàn, Gọi món, Gọi thêm món hoặc Chuyển bàn
+          </div>
+        </div>
+
+        <!-- LƯỚI THẺ BÀN ĂN -->
+        <div class="waiter-table-grid">
+          <div th:each="table : ${tables}" 
+               class="waiter-table-card" 
+               th:classappend="${table.status == 'AVAILABLE' ? 'table-available' : (table.status == 'OCCUPIED' ? 'table-occupied' : 'table-reserved')}"
+               th:data-area="${table.area}">
+
+            <!-- Header Thẻ Bàn -->
+            <div class="table-card-header">
+              <div>
+                <div class="table-card-number" th:text="${table.tableNumber}">T1-01</div>
+                <small style="color: var(--admin-text-muted); font-size: 11px;" th:text="${table.area}">Tầng 1 - Sảnh chính</small>
+              </div>
+              <div style="text-align: right;">
+                <span class="badge" th:classappend="${table.statusBadgeClass}" th:text="${table.statusDisplayName}">Bàn trống</span>
+                <div style="font-size: 11px; color: var(--admin-text-muted); margin-top: 3px;" th:text="${table.capacity} + ' chỗ ngồi'">4 chỗ</div>
+              </div>
+            </div>
+
+            <!-- Body Thẻ Bàn -->
+            <div class="table-card-body">
+              <!-- TRƯỜNG HỢP: BÀN TRỐNG (AVAILABLE) -->
+              <div th:if="${table.status == 'AVAILABLE'}" style="text-align: center; padding: 20px 10px; color: var(--admin-text-muted);">
+                <div style="font-size: 32px; margin-bottom: 8px;">✨</div>
+                <div style="font-weight: 600; color: #1f7a26;">Bàn Sạch Sẽ - Sẵn Sàng</div>
+                <p style="font-size: 12px; margin: 6px 0 0;">Chào đón khách mới và mở bàn để bắt đầu gọi món</p>
+              </div>
+
+              <!-- TRƯỜNG HỢP: BÀN ĐÃ ĐẶT TRƯỚC (RESERVED) -->
+              <div th:if="${table.status == 'RESERVED'}" style="text-align: center; padding: 20px 10px; color: var(--admin-text-muted);">
+                <div style="font-size: 32px; margin-bottom: 8px;">📋</div>
+                <div style="font-weight: 600; color: #d97706;">Bàn Đã Được Đặt Trước</div>
+                <p style="font-size: 12px; margin: 6px 0 0;">Vui lòng chuẩn bị ly, khăn, menu để sẵn sàng đón khách</p>
+              </div>
+
+              <!-- TRƯỜNG HỢP: BÀN ĐANG CÓ KHÁCH (OCCUPIED) -->
+              <div th:if="${table.status == 'OCCUPIED'}">
+                <div th:with="currOrder=${tableOrderMap.get(table.id)}">
+                  <!-- Báo động nếu món đã nấu xong -->
+                  <div th:if="${currOrder != null and currOrder.status == 'SERVING'}" class="food-alert-banner">
+                    <span></span> <strong>Món đã nấu xong! Hãy bưng ra bàn ngay</strong>
+                  </div>
+
+                  <div th:if="${currOrder != null}">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 12px;">
+                      <span style="color: var(--admin-text-muted);">Mã đơn:</span>
+                      <strong th:text="${currOrder.orderCode}">ORD-20261026-103</strong>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 12px;">
+                      <span style="color: var(--admin-text-muted);">Trạng thái bếp:</span>
+                      <span th:if="${currOrder.status == 'PENDING'}" style="color: #d97706; font-weight: 600;">⏳ Bếp chờ nhận</span>
+                      <span th:if="${currOrder.status == 'COOKING'}" style="color: #e28710; font-weight: 600;">👨‍🍳 Đang nấu</span>
+                      <span th:if="${currOrder.status == 'SERVING'}" style="color: #1f7a26; font-weight: 700;">✅ Sẵn sàng ra món</span>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 12px; border-bottom: 1px dashed var(--admin-line); padding-bottom: 8px;">
+                      <span style="color: var(--admin-text-muted);">Tạm tính:</span>
+                      <strong style="color: var(--admin-gold); font-size: 14px;" th:text="${#numbers.formatDecimal(currOrder.totalAmount, 0, 'POINT', 0, 'COMMA')} + ' đ'">502,200 đ</strong>
+                    </div>
+
+                    <!-- Danh sách món tóm tắt -->
+                    <div style="font-size: 12px; max-height: 90px; overflow-y: auto;">
+                      <div th:each="it : ${currOrder.items}" style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                        <span><span th:text="${it.quantity}">1</span>x <span th:text="${it.itemName}">Món</span></span>
+                        <span style="font-size: 10px; color: var(--admin-text-muted);" th:text="${it.status}">PENDING</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div th:if="${currOrder == null}" style="text-align: center; padding: 15px 0; color: var(--admin-text-muted); font-size: 12px;">
+                    Khách đang ngồi (Chưa phát sinh đơn gọi món)
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Footer Thẻ Bàn (Hành động Phục vụ) -->
+            <div class="table-card-footer">
+              <!-- BÀN TRỐNG: Nút Gọi món tại bàn -->
+              <button th:if="${table.status == 'AVAILABLE'}" type="button" class="btn btn-primary" style="width: 100%; padding: 10px;"
+                      th:onclick="openOrderModal([[${table.id}]], [[${table.tableNumber}]], [[${table.capacity}]])">
+                 Mở Bàn &amp; Gọi Món
+              </button>
+
+              <!-- BÀN ĐÃ ĐẶT: Nút Đón khách vào bàn -->
+              <button th:if="${table.status == 'RESERVED'}" type="button" class="btn btn-primary" style="width: 100%; padding: 10px; background: #d97706; border-color: #d97706;"
+                      th:onclick="openOrderModal([[${table.id}]], [[${table.tableNumber}]], [[${table.capacity}]])">
+                 Đón Khách Vào &amp; Gọi Món
+              </button>
+
+              <!-- BÀN CÓ KHÁCH: Các hành động nâng cao -->
+              <div th:if="${table.status == 'OCCUPIED'}" th:with="currOrder=${tableOrderMap.get(table.id)}" style="display: flex; flex-direction: column; gap: 6px;">
+                <div style="display: flex; gap: 6px;">
+                  <!-- Gọi thêm món -->
+                  <button th:if="${currOrder != null}" type="button" class="btn-sm" style="flex: 1; background: #fff; border: 1px solid var(--admin-line); font-weight: 600; padding: 8px;"
+                          th:onclick="openAddItemsModal([[${currOrder.id}]], [[${table.tableNumber}]])">
+                     Thêm Món
+                  </button>
+                  <!-- Nếu chưa có đơn thì mở tạo đơn mới -->
+                  <button th:if="${currOrder == null}" type="button" class="btn-sm" style="flex: 1; background: #fff; border: 1px solid var(--admin-line); font-weight: 600; padding: 8px;"
+                          th:onclick="openOrderModal([[${table.id}]], [[${table.tableNumber}]], [[${table.capacity}]])">
+                     Gọi Món Mới
+                  </button>
+
+                  <!-- Đổi bàn -->
+                  <button th:if="${currOrder != null and not #lists.isEmpty(availableTables)}" type="button" class="btn-sm" style="background: #fff; border: 1px solid var(--admin-line); font-weight: 600; padding: 8px;"
+                          th:onclick="openMoveTableModal([[${currOrder.id}]], [[${table.id}]], [[${table.tableNumber}]])" title="Chuyển khách sang bàn trống khác">
+                     Đổi Bàn
+                  </button>
+                </div>
+
+                <div style="display: flex; gap: 6px;">
+                  <!-- Yêu cầu in hóa đơn sang Thu ngân -->
+                  <form th:if="${currOrder != null}" th:action="@{/admin/waiter/request-bill}" method="post" style="flex: 1;">
+                    <input type="hidden" name="tableNumber" th:value="${table.tableNumber}">
+                    <input type="hidden" name="orderCode" th:value="${currOrder.orderCode}">
+                    <button type="submit" class="btn-sm" style="width: 100%; background: #fff; border: 1px solid #b9955b; color: #b9955b; font-weight: 600; padding: 8px;">
+                       Yêu Cầu Tính Tiền
+                    </button>
+                  </form>
+
+                  <!-- Dọn bàn hoàn tất -->
+                  <form th:action="@{/admin/waiter/clear-table}" method="post" style="flex: 1;" onsubmit="return confirm('Xác nhận khách đã rời đi và bàn đã được dọn sạch sẽ để đón khách mới?')">
+                    <input type="hidden" name="tableId" th:value="${table.id}">
+                    <input type="hidden" name="orderId" th:value="${currOrder != null ? currOrder.id : ''}">
+                    <button type="submit" class="btn-sm" style="width: 100%; background: #1e1b18; color: #fff; font-weight: 600; padding: 8px;">
+                       Dọn Bàn Xong
+                    </button>
+                  </form>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========================================================
+           TAB 2: TRẠM RA MÓN (FOOD RUNNER STATION)
+           ======================================================== -->
+      <div id="tab-content-runner" style="display: none;">
+        <div style="background: #fff; padding: 18px 24px; border-radius: 6px; border: 1px solid var(--admin-line); margin-bottom: 24px;">
+          <h2 style="font-size: 18px; margin: 0 0 6px; display: flex; align-items: center; gap: 8px;">
+            <span></span> Danh Sách Món Bếp Đã Nấu Xong - Sẵn Sàng Ra Bàn
+          </h2>
+          <p style="font-size: 13px; color: var(--admin-text-muted); margin: 0;">
+            Khi Bếp Trưởng bấm "Nấu xong", các đơn cần bưng ra bàn sẽ hiển thị ngay tại đây. Sau khi phục vụ bưng đĩa món tới bàn khách, hãy bấm <strong>"Đã Bưng Ra Bàn"</strong>.
+          </p>
+        </div>
+
+        <div th:if="${#lists.isEmpty(readyOrders)}" style="text-align: center; padding: 60px 20px; background: #fff; border-radius: 6px; border: 1px dashed var(--admin-line);">
+          <div style="font-size: 40px; margin-bottom: 12px;"></div>
+          <h3 style="font-size: 16px; margin: 0 0 6px; color: var(--admin-text);">Hiện Không Có Món Nào Đang Chờ Bưng</h3>
+          <p style="font-size: 13px; color: var(--admin-text-muted); margin: 0;">Tất cả món đã nấu đều đã được phục vụ tận bàn khách ăn.</p>
+        </div>
+
+        <div th:if="${not #lists.isEmpty(readyOrders)}" class="runner-ticket-grid">
+          <div th:each="ro : ${readyOrders}" class="runner-ticket-card">
+            <div class="runner-ticket-header">
+              <div>
+                <strong style="font-size: 20px; color: #fff;" th:text="${ro.tableNumber != null ? 'BÀN ' + ro.tableNumber : 'ĐƠN ' + ro.orderCode}">BÀN T1-03</strong>
+                <div style="font-size: 11px; color: var(--admin-gold); margin-top: 2px;" th:text="${ro.orderCode}">ORD-20261022-001</div>
+              </div>
+              <span class="badge" style="background: #1f7a26; color: #fff; padding: 4px 10px; font-weight: bold;">ĐÃ NẤU XONG</span>
+            </div>
+
+            <div class="runner-ticket-body">
+              <div style="font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--admin-text-muted); margin-bottom: 10px;">
+                Chi tiết món cần bưng ra bàn:
+              </div>
+
+              <div style="display: flex; flex-direction: column; gap: 8px;">
+                <div th:each="item : ${ro.items}" style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: #fdfaf6; border-radius: 4px; border: 1px solid #f0ede6;">
+                  <div>
+                    <strong style="font-size: 14px;" th:text="${item.itemName}">Slow-Braised Beef</strong>
+                    <div th:if="${item.note != null and not #strings.isEmpty(item.note)}" style="font-size: 11px; color: #c93b2b; font-style: italic;" th:text="'Ghi chú: ' + ${item.note}"></div>
+                  </div>
+                  <strong style="font-size: 16px; color: var(--admin-gold);" th:text="'x' + ${item.quantity}">x1</strong>
+                </div>
+              </div>
+
+              <div th:if="${ro.note != null and not #strings.isEmpty(ro.note)}" style="margin-top: 14px; padding: 8px 12px; background: #fff8f0; border-left: 3px solid var(--admin-gold); font-size: 12px;">
+                <strong>Lưu ý từ khách:</strong> <span th:text="${ro.note}"></span>
+              </div>
+            </div>
+
+            <div class="runner-ticket-footer">
+              <form th:action="@{/admin/waiter/serve-order}" method="post">
+                <input type="hidden" name="orderId" th:value="${ro.id}">
+                <input type="hidden" name="tableNumber" th:value="${ro.tableNumber}">
+                <button type="submit" class="btn btn-primary" style="width: 100%; padding: 12px; font-size: 14px; font-weight: 700;">
+                   Đã Bưng Ra Bàn
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========================================================
+           TAB 3: LỊCH ĐẶT BÀN TRONG NGÀY
+           ======================================================== -->
+      <div id="tab-content-reservations" style="display: none;">
+        <div style="background: #fff; padding: 18px 24px; border-radius: 6px; border: 1px solid var(--admin-line); margin-bottom: 24px;">
+          <h2 style="font-size: 18px; margin: 0 0 6px;"> Danh Sách Khách Hàng Đặt Bàn Trước</h2>
+          <p style="font-size: 13px; color: var(--admin-text-muted); margin: 0;">Theo dõi giờ khách đến và số lượng khách để nhân viên phục vụ set up bàn trước ca ăn.</p>
+        </div>
+
+        <div style="background: #fff; border: 1px solid var(--admin-line); border-radius: 6px; overflow: hidden;">
+          <table class="admin-table" style="width: 100%; border-collapse: collapse;">
+            <thead>
+              <tr style="background: #f7f5f0; border-bottom: 1px solid var(--admin-line); text-align: left; font-size: 12px; text-transform: uppercase;">
+                <th style="padding: 12px 18px;">Mã</th>
+                <th style="padding: 12px 18px;">Khách Hàng</th>
+                <th style="padding: 12px 18px;">Số Khách</th>
+                <th style="padding: 12px 18px;">Ngày Giờ</th>
+                <th style="padding: 12px 18px;">Bàn Phân Công</th>
+                <th style="padding: 12px 18px;">Trạng Thái</th>
+                <th style="padding: 12px 18px;">Ghi Chú</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr th:each="res : ${reservations}" style="border-bottom: 1px solid #f0ede6; font-size: 13px;">
+                <td style="padding: 12px 18px;"><strong th:text="'#RSV-' + ${res.id}">#RSV-1</strong></td>
+                <td style="padding: 12px 18px;">
+                  <strong th:text="${res.customerName}">Nguyễn Hoàng Nam</strong>
+                  <div style="font-size: 11px; color: var(--admin-text-muted);" th:text="${res.phone}">0901234567</div>
+                </td>
+                <td style="padding: 12px 18px;"><span th:text="${res.guestCount} + ' người'">4 người</span></td>
+                <td style="padding: 12px 18px;">
+                  <strong th:text="${res.reservationTime}">19:00</strong>
+                  <div style="font-size: 11px; color: var(--admin-text-muted);" th:text="${res.reservationDate}">2026-10-24</div>
+                </td>
+                <td style="padding: 12px 18px;">
+                  <strong style="color: var(--admin-gold);" th:text="${res.assignedTable != null ? res.assignedTable : 'Chưa xếp'}">T1-04</strong>
+                </td>
+                <td style="padding: 12px 18px;">
+                  <span class="badge" th:classappend="${res.statusBadgeClass}" th:text="${res.statusDisplayName}">Đã xác nhận</span>
+                </td>
+                <td style="padding: 12px 18px; color: var(--admin-text-muted); font-size: 12px;" th:text="${res.note != null ? res.note : '-'}">-</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ========================================================
+     MODAL 1: GỌI MÓN TẠI BÀN (MỞ BÀN)
+     ======================================================== -->
+<div class="modal-overlay" id="orderModal">
+  <div class="modal-container">
+    <div class="modal-header">
+      <div>
+        <h3 style="margin: 0; font-size: 18px;" id="orderModalTitle">Gọi Món Cho Bàn T1-01</h3>
+        <small style="color: var(--admin-text-muted);">Đơn hàng sẽ được tạo và gửi trực tiếp xuống màn hình Bếp (KDS)</small>
+      </div>
+      <button type="button" onclick="closeOrderModal()" style="background: none; border: none; font-size: 22px; cursor: pointer;">&times;</button>
+    </div>
+
+    <form th:action="@{/admin/waiter/create-order}" method="post">
+      <div class="modal-body">
+        <input type="hidden" name="tableId" id="orderModalTableId">
+
+        <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 16px; margin-bottom: 20px;">
+          <div>
+            <label style="font-size: 12px; font-weight: 600; display: block; margin-bottom: 6px;">Số Lượng Khách:</label>
+            <input type="number" name="customerCount" id="orderModalCustomerCount" min="1" max="20" value="2" required style="width: 100%; padding: 8px 12px; border: 1px solid var(--admin-line); border-radius: 4px;">
+          </div>
+          <div>
+            <label style="font-size: 12px; font-weight: 600; display: block; margin-bottom: 6px;">Ghi Chú Đơn Hàng (Cho Bếp):</label>
+            <input type="text" name="note" placeholder="VD: Khách ăn kiêng ngọt, chuẩn bị khăn lạnh..." style="width: 100%; padding: 8px 12px; border: 1px solid var(--admin-line); border-radius: 4px;">
+          </div>
+        </div>
+
+        <div style="font-weight: 700; font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--admin-gold); margin-bottom: 12px; border-bottom: 1px solid var(--admin-line); padding-bottom: 6px;">
+          Chọn Các Món Ăn Cho Bàn:
+        </div>
+
+        <!-- Danh sách thực đơn để chọn -->
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          <div th:each="m : ${menuItems}" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: #faf8f5; border: 1px solid var(--admin-line); border-radius: 4px;">
+            <div style="flex: 1; min-width: 0; padding-right: 12px;">
+              <strong style="font-size: 14px; display: block;" th:text="${m.name}">Fresh Spring Rolls</strong>
+              <small style="color: var(--admin-gold); font-weight: 600;" th:text="${#numbers.formatDecimal(m.priceValue, 0, 'POINT', 0, 'COMMA')} + ' đ'">95,000 đ</small>
+              <span style="font-size: 10px; color: var(--admin-text-muted); margin-left: 6px;" th:text="'(' + ${m.category} + ')'"></span>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <input type="hidden" name="menuItemId" th:value="${m.id}">
+              <input type="number" name="quantity" min="0" max="50" value="0" placeholder="SL" style="width: 60px; padding: 6px; border: 1px solid var(--admin-line); border-radius: 4px; text-align: center; font-weight: 700;">
+              <input type="text" name="itemNote" placeholder="Ghi chú món" style="width: 130px; padding: 6px 10px; border: 1px solid var(--admin-line); border-radius: 4px; font-size: 12px;">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" onclick="closeOrderModal()" class="btn-sm" style="background: #e5e5e5; padding: 10px 18px; border: none; cursor: pointer; border-radius: 4px; font-weight: 600;">Hủy</button>
+        <button type="submit" class="btn btn-primary" style="padding: 10px 24px; font-weight: 700;">🚀 Gửi Đơn Xuống Bếp</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ========================================================
+     MODAL 2: GỌI THÊM MÓN CHO BÀN ĐANG CÓ KHÁCH
+     ======================================================== -->
+<div class="modal-overlay" id="addItemsModal">
+  <div class="modal-container">
+    <div class="modal-header">
+      <div>
+        <h3 style="margin: 0; font-size: 18px;" id="addItemsModalTitle">Gọi Thêm Món Cho Bàn</h3>
+        <small style="color: var(--admin-text-muted);">Món mới sẽ được bổ sung vào đơn hiện tại và thông báo ngay cho Bếp</small>
+      </div>
+      <button type="button" onclick="closeAddItemsModal()" style="background: none; border: none; font-size: 22px; cursor: pointer;">&times;</button>
+    </div>
+
+    <form th:action="@{/admin/waiter/add-items}" method="post">
+      <div class="modal-body">
+        <input type="hidden" name="orderId" id="addItemsModalOrderId">
+
+        <div style="font-weight: 700; font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--admin-gold); margin-bottom: 12px; border-bottom: 1px solid var(--admin-line); padding-bottom: 6px;">
+          Chọn Món Muốn Bổ Sung:
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          <div th:each="m : ${menuItems}" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: #faf8f5; border: 1px solid var(--admin-line); border-radius: 4px;">
+            <div style="flex: 1; min-width: 0; padding-right: 12px;">
+              <strong style="font-size: 14px; display: block;" th:text="${m.name}">Fresh Spring Rolls</strong>
+              <small style="color: var(--admin-gold); font-weight: 600;" th:text="${#numbers.formatDecimal(m.priceValue, 0, 'POINT', 0, 'COMMA')} + ' đ'">95,000 đ</small>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <input type="hidden" name="menuItemId" th:value="${m.id}">
+              <input type="number" name="quantity" min="0" max="50" value="0" placeholder="SL" style="width: 60px; padding: 6px; border: 1px solid var(--admin-line); border-radius: 4px; text-align: center; font-weight: 700;">
+              <input type="text" name="itemNote" placeholder="Ghi chú món" style="width: 130px; padding: 6px 10px; border: 1px solid var(--admin-line); border-radius: 4px; font-size: 12px;">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" onclick="closeAddItemsModal()" class="btn-sm" style="background: #e5e5e5; padding: 10px 18px; border: none; cursor: pointer; border-radius: 4px; font-weight: 600;">Hủy</button>
+        <button type="submit" class="btn btn-primary" style="padding: 10px 24px; font-weight: 700;">➕ Thêm Món Vào Bếp</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ========================================================
+     MODAL 3: ĐỔI BÀN (CHUYỂN KHÁCH SANG BÀN MỚI)
+     ======================================================== -->
+<div class="modal-overlay" id="moveTableModal">
+  <div class="modal-container" style="max-width: 480px;">
+    <div class="modal-header">
+      <div>
+        <h3 style="margin: 0; font-size: 18px;">Chuyển Khách Sang Bàn Khác</h3>
+        <small style="color: var(--admin-text-muted);" id="moveTableModalSub">Chuyển từ bàn hiện tại</small>
+      </div>
+      <button type="button" onclick="closeMoveTableModal()" style="background: none; border: none; font-size: 22px; cursor: pointer;">&times;</button>
+    </div>
+
+    <form th:action="@{/admin/waiter/move-table}" method="post">
+      <div class="modal-body">
+        <input type="hidden" name="orderId" id="moveTableOrderId">
+        <input type="hidden" name="fromTableId" id="moveTableFromId">
+
+        <label style="font-size: 13px; font-weight: 600; display: block; margin-bottom: 8px;">Chọn Bàn Mới (Đang Trống):</label>
+        <select name="toTableId" required style="width: 100%; padding: 10px 12px; border: 1px solid var(--admin-line); border-radius: 4px; font-size: 14px;">
+          <option value="" disabled selected>-- Chọn bàn muốn chuyển sang --</option>
+          <option th:each="at : ${availableTables}" th:value="${at.id}" th:text="${at.tableNumber} + ' (' + ${at.area} + ' - ' + ${at.capacity} + ' chỗ)'"></option>
+        </select>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" onclick="closeMoveTableModal()" class="btn-sm" style="background: #e5e5e5; padding: 10px 18px; border: none; cursor: pointer; border-radius: 4px; font-weight: 600;">Hủy</button>
+        <button type="submit" class="btn btn-primary" style="padding: 10px 24px; font-weight: 700;">🔄 Xác Nhận Đổi Bàn</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- JAVASCRIPT ĐIỀU KHIỂN GIAO DIỆN PHỤC VỤ -->
+<script>
+  function switchTab(tabName) {
+    document.getElementById('tab-content-tables').style.display = 'none';
+    document.getElementById('tab-content-runner').style.display = 'none';
+    document.getElementById('tab-content-reservations').style.display = 'none';
+
+    document.getElementById('tab-btn-tables').classList.remove('active');
+    document.getElementById('tab-btn-runner').classList.remove('active');
+    document.getElementById('tab-btn-reservations').classList.remove('active');
+
+    if (tabName === 'tables') {
+      document.getElementById('tab-content-tables').style.display = 'block';
+      document.getElementById('tab-btn-tables').classList.add('active');
+    } else if (tabName === 'runner') {
+      document.getElementById('tab-content-runner').style.display = 'block';
+      document.getElementById('tab-btn-runner').classList.add('active');
+    } else if (tabName === 'reservations') {
+      document.getElementById('tab-content-reservations').style.display = 'block';
+      document.getElementById('tab-btn-reservations').classList.add('active');
+    }
+  }
+
+  function filterTables(area, btn) {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+
+    const cards = document.querySelectorAll('.waiter-table-card');
+    cards.forEach(card => {
+      const cardArea = card.getAttribute('data-area') || '';
+      if (area === 'ALL' || cardArea.includes(area)) {
+        card.style.display = 'flex';
+      } else {
+        card.style.display = 'none';
+      }
+    });
+  }
+
+  // MODAL ORDER
+  function openOrderModal(tableId, tableNumber, capacity) {
+    document.getElementById('orderModalTableId').value = tableId;
+    document.getElementById('orderModalTitle').innerText = 'Gọi Món Cho Bàn ' + tableNumber;
+    document.getElementById('orderModalCustomerCount').value = capacity > 0 ? capacity : 2;
+    document.getElementById('orderModal').classList.add('active');
+  }
+  function closeOrderModal() {
+    document.getElementById('orderModal').classList.remove('active');
+  }
+
+  // MODAL ADD ITEMS
+  function openAddItemsModal(orderId, tableNumber) {
+    document.getElementById('addItemsModalOrderId').value = orderId;
+    document.getElementById('addItemsModalTitle').innerText = 'Gọi Thêm Món Cho ' + tableNumber;
+    document.getElementById('addItemsModal').classList.add('active');
+  }
+  function closeAddItemsModal() {
+    document.getElementById('addItemsModal').classList.remove('active');
+  }
+
+  // MODAL MOVE TABLE
+  function openMoveTableModal(orderId, fromTableId, tableNumber) {
+    document.getElementById('moveTableOrderId').value = orderId;
+    document.getElementById('moveTableFromId').value = fromTableId;
+    document.getElementById('moveTableModalSub').innerText = 'Chuyển từ bàn ' + tableNumber;
+    document.getElementById('moveTableModal').classList.add('active');
+  }
+  function closeMoveTableModal() {
+    document.getElementById('moveTableModal').classList.remove('active');
+  }
+</script>
+
+</body>
+</html>
