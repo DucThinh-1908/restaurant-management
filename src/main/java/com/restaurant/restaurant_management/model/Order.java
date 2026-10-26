@@ -10,6 +10,7 @@ public class Order {
     private Long id;
     private String orderCode;
     private String orderType = "DELIVERY"; // DINE_IN, TAKE_AWAY, DELIVERY
+    private Long tableId;
     private String tableNumber; // Ví dụ: T1-01, T1-03, VIP-01 (khi là DINE_IN)
     private Long customerId;
     private String customerName;
@@ -22,8 +23,11 @@ public class Order {
     private BigDecimal taxPercent = new BigDecimal("8.00");
     private BigDecimal taxAmount = BigDecimal.ZERO;
     private BigDecimal totalAmount = BigDecimal.ZERO;
-    private String paymentMethod = "CASH"; // CASH, BANK_TRANSFER
+    private String paymentMethod = "CASH"; // CASH, BANK_TRANSFER, CREDIT_CARD, E_WALLET
+    private String transactionCode;
+    private String cashierName;
     private LocalDateTime createdAt = LocalDateTime.now();
+    private LocalDateTime completedAt;
     private List<OrderItem> items = new ArrayList<>();
 
     public Order() {
@@ -200,6 +204,51 @@ public class Order {
 
     public void setTableNumber(String tableNumber) {
         this.tableNumber = tableNumber;
+    }
+
+    public Long getTableId() {
+        return tableId;
+    }
+
+    public void setTableId(Long tableId) {
+        this.tableId = tableId;
+    }
+
+    public LocalDateTime getCompletedAt() {
+        return completedAt;
+    }
+
+    public void setCompletedAt(LocalDateTime completedAt) {
+        this.completedAt = completedAt;
+    }
+
+    public String getFormattedCompletedAt() {
+        if (completedAt == null) return "";
+        return completedAt.format(DateTimeFormatter.ofPattern("HH:mm - dd/MM/yyyy"));
+    }
+
+    public String getCashierName() {
+        return cashierName;
+    }
+
+    public void setCashierName(String cashierName) {
+        this.cashierName = cashierName;
+    }
+
+    public String getTransactionCode() {
+        return transactionCode;
+    }
+
+    public void setTransactionCode(String transactionCode) {
+        this.transactionCode = transactionCode;
+    }
+
+    public String getPaymentMethodDisplayName() {
+        if ("CASH".equalsIgnoreCase(paymentMethod)) return "Tiền mặt";
+        if ("BANK_TRANSFER".equalsIgnoreCase(paymentMethod)) return "Chuyển khoản QR";
+        if ("CREDIT_CARD".equalsIgnoreCase(paymentMethod)) return "Quẹt thẻ POS";
+        if ("E_WALLET".equalsIgnoreCase(paymentMethod)) return "Ví điện tử";
+        return paymentMethod != null ? paymentMethod : "Tiền mặt";
     }
 
     public List<OrderItem> getItems() {
