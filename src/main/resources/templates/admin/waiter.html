@@ -319,136 +319,144 @@
      MODAL 1: GỌI MÓN TẠI BÀN (MỞ BÀN)
      ======================================================== -->
 <div class="modal-overlay" id="orderModal">
-  <div class="modal-container">
+  <form th:action="@{/admin/waiter/create-order}" method="post" class="modal-container">
     <div class="modal-header">
       <div>
         <h3 style="margin: 0; font-size: 18px;" id="orderModalTitle">Gọi Món Cho Bàn T1-01</h3>
         <small style="color: var(--admin-text-muted);">Đơn hàng sẽ được tạo và gửi trực tiếp xuống màn hình Bếp (KDS)</small>
       </div>
-      <button type="button" onclick="closeOrderModal()" style="background: none; border: none; font-size: 22px; cursor: pointer;">&times;</button>
+      <button type="button" onclick="closeOrderModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: var(--admin-text-muted);">&times;</button>
     </div>
 
-    <form th:action="@{/admin/waiter/create-order}" method="post">
-      <div class="modal-body">
-        <input type="hidden" name="tableId" id="orderModalTableId">
+    <div class="modal-body">
+      <input type="hidden" name="tableId" id="orderModalTableId">
 
-        <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 16px; margin-bottom: 20px;">
-          <div>
-            <label style="font-size: 12px; font-weight: 600; display: block; margin-bottom: 6px;">Số Lượng Khách:</label>
-            <input type="number" name="customerCount" id="orderModalCustomerCount" min="1" max="20" value="2" required style="width: 100%; padding: 8px 12px; border: 1px solid var(--admin-line); border-radius: 4px;">
-          </div>
-          <div>
-            <label style="font-size: 12px; font-weight: 600; display: block; margin-bottom: 6px;">Ghi Chú Đơn Hàng (Cho Bếp):</label>
-            <input type="text" name="note" placeholder="VD: Khách ăn kiêng ngọt, chuẩn bị khăn lạnh..." style="width: 100%; padding: 8px 12px; border: 1px solid var(--admin-line); border-radius: 4px;">
-          </div>
+      <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 16px; margin-bottom: 20px;">
+        <div>
+          <label style="font-size: 12px; font-weight: 600; display: block; margin-bottom: 6px;">Số Lượng Khách:</label>
+          <input type="number" name="customerCount" id="orderModalCustomerCount" min="1" max="20" value="2" required style="width: 100%; padding: 8px 12px; border: 1px solid var(--admin-line); border-radius: 4px;">
         </div>
-
-        <div style="font-weight: 700; font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--admin-gold); margin-bottom: 12px; border-bottom: 1px solid var(--admin-line); padding-bottom: 6px;">
-          Chọn Các Món Ăn Cho Bàn:
-        </div>
-
-        <!-- Danh sách thực đơn để chọn -->
-        <div style="display: flex; flex-direction: column; gap: 10px;">
-          <div th:each="m : ${menuItems}" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: #faf8f5; border: 1px solid var(--admin-line); border-radius: 4px;">
-            <div style="flex: 1; min-width: 0; padding-right: 12px;">
-              <strong style="font-size: 14px; display: block;" th:text="${m.name}">Fresh Spring Rolls</strong>
-              <small style="color: var(--admin-gold); font-weight: 600;" th:text="${#numbers.formatDecimal(m.priceValue, 0, 'POINT', 0, 'COMMA')} + ' đ'">95,000 đ</small>
-              <span style="font-size: 10px; color: var(--admin-text-muted); margin-left: 6px;" th:text="'(' + ${m.category} + ')'"></span>
-            </div>
-
-            <div style="display: flex; align-items: center; gap: 8px;">
-              <input type="hidden" name="menuItemId" th:value="${m.id}">
-              <input type="number" name="quantity" min="0" max="50" value="0" placeholder="SL" style="width: 60px; padding: 6px; border: 1px solid var(--admin-line); border-radius: 4px; text-align: center; font-weight: 700;">
-              <input type="text" name="itemNote" placeholder="Ghi chú món" style="width: 130px; padding: 6px 10px; border: 1px solid var(--admin-line); border-radius: 4px; font-size: 12px;">
-            </div>
-          </div>
+        <div>
+          <label style="font-size: 12px; font-weight: 600; display: block; margin-bottom: 6px;">Ghi Chú Đơn Hàng (Cho Bếp):</label>
+          <input type="text" name="note" placeholder="VD: Khách ăn kiêng ngọt, chuẩn bị khăn lạnh..." style="width: 100%; padding: 8px 12px; border: 1px solid var(--admin-line); border-radius: 4px;">
         </div>
       </div>
 
-      <div class="modal-footer">
-        <button type="button" onclick="closeOrderModal()" class="btn-sm" style="background: #e5e5e5; padding: 10px 18px; border: none; cursor: pointer; border-radius: 4px; font-weight: 600;">Hủy</button>
-        <button type="submit" class="btn btn-primary" style="padding: 10px 24px; font-weight: 700;">🚀 Gửi Đơn Xuống Bếp</button>
+      <div style="font-weight: 700; font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--admin-gold); margin-bottom: 12px; border-bottom: 1px solid var(--admin-line); padding-bottom: 6px;">
+        Chọn Các Món Ăn Cho Bàn:
       </div>
-    </form>
-  </div>
+
+      <!-- Danh sách thực đơn để chọn -->
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <div th:each="m : ${menuItems}" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: #faf8f5; border: 1px solid var(--admin-line); border-radius: 4px;">
+          <div style="flex: 1; min-width: 0; padding-right: 12px;">
+            <strong style="font-size: 14px; display: block;" th:text="${m.name}">Fresh Spring Rolls</strong>
+            <small style="color: var(--admin-gold); font-weight: 600;" th:text="${#numbers.formatDecimal(m.priceValue, 0, 'POINT', 0, 'COMMA')} + ' đ'">95,000 đ</small>
+            <span style="font-size: 10px; color: var(--admin-text-muted); margin-left: 6px;" th:text="'(' + ${m.category} + ')'"></span>
+          </div>
+
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <input type="hidden" name="menuItemId" th:value="${m.id}">
+            <div style="display: flex; align-items: center; border: 1px solid var(--admin-line); border-radius: 4px; overflow: hidden; background: #fff;">
+              <button type="button" onclick="changeQty(this, -1)" style="border: none; background: #f0ede6; width: 30px; height: 32px; font-weight: bold; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center;">-</button>
+              <input type="number" name="quantity" min="0" max="50" value="0" style="width: 44px; height: 32px; border: none; text-align: center; font-weight: 700; font-size: 14px;" onchange="validateQty(this)">
+              <button type="button" onclick="changeQty(this, 1)" style="border: none; background: #f0ede6; width: 30px; height: 32px; font-weight: bold; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center;">+</button>
+            </div>
+            <input type="text" name="itemNote" placeholder="Ghi chú món" style="width: 140px; padding: 6px 10px; border: 1px solid var(--admin-line); border-radius: 4px; font-size: 12px;">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button type="button" onclick="closeOrderModal()" class="btn-sm" style="background: #e5e5e5; padding: 10px 18px; border: none; cursor: pointer; border-radius: 4px; font-weight: 600;">Hủy</button>
+      <button type="submit" class="btn btn-primary" style="padding: 10px 24px; font-weight: 700; background: var(--admin-gold); color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">
+         Gửi Đơn Xuống Bếp
+      </button>
+    </div>
+  </form>
 </div>
 
 <!-- ========================================================
      MODAL 2: GỌI THÊM MÓN CHO BÀN ĐANG CÓ KHÁCH
      ======================================================== -->
 <div class="modal-overlay" id="addItemsModal">
-  <div class="modal-container">
+  <form th:action="@{/admin/waiter/add-items}" method="post" class="modal-container">
     <div class="modal-header">
       <div>
         <h3 style="margin: 0; font-size: 18px;" id="addItemsModalTitle">Gọi Thêm Món Cho Bàn</h3>
         <small style="color: var(--admin-text-muted);">Món mới sẽ được bổ sung vào đơn hiện tại và thông báo ngay cho Bếp</small>
       </div>
-      <button type="button" onclick="closeAddItemsModal()" style="background: none; border: none; font-size: 22px; cursor: pointer;">&times;</button>
+      <button type="button" onclick="closeAddItemsModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: var(--admin-text-muted);">&times;</button>
     </div>
 
-    <form th:action="@{/admin/waiter/add-items}" method="post">
-      <div class="modal-body">
-        <input type="hidden" name="orderId" id="addItemsModalOrderId">
+    <div class="modal-body">
+      <input type="hidden" name="orderId" id="addItemsModalOrderId">
 
-        <div style="font-weight: 700; font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--admin-gold); margin-bottom: 12px; border-bottom: 1px solid var(--admin-line); padding-bottom: 6px;">
-          Chọn Món Muốn Bổ Sung:
-        </div>
+      <div style="font-weight: 700; font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--admin-gold); margin-bottom: 12px; border-bottom: 1px solid var(--admin-line); padding-bottom: 6px;">
+        Chọn Món Muốn Bổ Sung:
+      </div>
 
-        <div style="display: flex; flex-direction: column; gap: 10px;">
-          <div th:each="m : ${menuItems}" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: #faf8f5; border: 1px solid var(--admin-line); border-radius: 4px;">
-            <div style="flex: 1; min-width: 0; padding-right: 12px;">
-              <strong style="font-size: 14px; display: block;" th:text="${m.name}">Fresh Spring Rolls</strong>
-              <small style="color: var(--admin-gold); font-weight: 600;" th:text="${#numbers.formatDecimal(m.priceValue, 0, 'POINT', 0, 'COMMA')} + ' đ'">95,000 đ</small>
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <div th:each="m : ${menuItems}" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: #faf8f5; border: 1px solid var(--admin-line); border-radius: 4px;">
+          <div style="flex: 1; min-width: 0; padding-right: 12px;">
+            <strong style="font-size: 14px; display: block;" th:text="${m.name}">Fresh Spring Rolls</strong>
+            <small style="color: var(--admin-gold); font-weight: 600;" th:text="${#numbers.formatDecimal(m.priceValue, 0, 'POINT', 0, 'COMMA')} + ' đ'">95,000 đ</small>
+          </div>
+
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <input type="hidden" name="menuItemId" th:value="${m.id}">
+            <div style="display: flex; align-items: center; border: 1px solid var(--admin-line); border-radius: 4px; overflow: hidden; background: #fff;">
+              <button type="button" onclick="changeQty(this, -1)" style="border: none; background: #f0ede6; width: 30px; height: 32px; font-weight: bold; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center;">-</button>
+              <input type="number" name="quantity" min="0" max="50" value="0" style="width: 44px; height: 32px; border: none; text-align: center; font-weight: 700; font-size: 14px;" onchange="validateQty(this)">
+              <button type="button" onclick="changeQty(this, 1)" style="border: none; background: #f0ede6; width: 30px; height: 32px; font-weight: bold; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center;">+</button>
             </div>
-
-            <div style="display: flex; align-items: center; gap: 8px;">
-              <input type="hidden" name="menuItemId" th:value="${m.id}">
-              <input type="number" name="quantity" min="0" max="50" value="0" placeholder="SL" style="width: 60px; padding: 6px; border: 1px solid var(--admin-line); border-radius: 4px; text-align: center; font-weight: 700;">
-              <input type="text" name="itemNote" placeholder="Ghi chú món" style="width: 130px; padding: 6px 10px; border: 1px solid var(--admin-line); border-radius: 4px; font-size: 12px;">
-            </div>
+            <input type="text" name="itemNote" placeholder="Ghi chú món" style="width: 140px; padding: 6px 10px; border: 1px solid var(--admin-line); border-radius: 4px; font-size: 12px;">
           </div>
         </div>
       </div>
+    </div>
 
-      <div class="modal-footer">
-        <button type="button" onclick="closeAddItemsModal()" class="btn-sm" style="background: #e5e5e5; padding: 10px 18px; border: none; cursor: pointer; border-radius: 4px; font-weight: 600;">Hủy</button>
-        <button type="submit" class="btn btn-primary" style="padding: 10px 24px; font-weight: 700;">➕ Thêm Món Vào Bếp</button>
-      </div>
-    </form>
-  </div>
+    <div class="modal-footer">
+      <button type="button" onclick="closeAddItemsModal()" class="btn-sm" style="background: #e5e5e5; padding: 10px 18px; border: none; cursor: pointer; border-radius: 4px; font-weight: 600;">Hủy</button>
+      <button type="submit" class="btn btn-primary" style="padding: 10px 24px; font-weight: 700; background: var(--admin-gold); color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">
+        ➕ Thêm Món Vào Bếp
+      </button>
+    </div>
+  </form>
 </div>
 
 <!-- ========================================================
      MODAL 3: ĐỔI BÀN (CHUYỂN KHÁCH SANG BÀN MỚI)
      ======================================================== -->
 <div class="modal-overlay" id="moveTableModal">
-  <div class="modal-container" style="max-width: 480px;">
+  <form th:action="@{/admin/waiter/move-table}" method="post" class="modal-container" style="max-width: 480px;">
     <div class="modal-header">
       <div>
         <h3 style="margin: 0; font-size: 18px;">Chuyển Khách Sang Bàn Khác</h3>
         <small style="color: var(--admin-text-muted);" id="moveTableModalSub">Chuyển từ bàn hiện tại</small>
       </div>
-      <button type="button" onclick="closeMoveTableModal()" style="background: none; border: none; font-size: 22px; cursor: pointer;">&times;</button>
+      <button type="button" onclick="closeMoveTableModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: var(--admin-text-muted);">&times;</button>
     </div>
 
-    <form th:action="@{/admin/waiter/move-table}" method="post">
-      <div class="modal-body">
-        <input type="hidden" name="orderId" id="moveTableOrderId">
-        <input type="hidden" name="fromTableId" id="moveTableFromId">
+    <div class="modal-body">
+      <input type="hidden" name="orderId" id="moveTableOrderId">
+      <input type="hidden" name="fromTableId" id="moveTableFromId">
 
-        <label style="font-size: 13px; font-weight: 600; display: block; margin-bottom: 8px;">Chọn Bàn Mới (Đang Trống):</label>
-        <select name="toTableId" required style="width: 100%; padding: 10px 12px; border: 1px solid var(--admin-line); border-radius: 4px; font-size: 14px;">
-          <option value="" disabled selected>-- Chọn bàn muốn chuyển sang --</option>
-          <option th:each="at : ${availableTables}" th:value="${at.id}" th:text="${at.tableNumber} + ' (' + ${at.area} + ' - ' + ${at.capacity} + ' chỗ)'"></option>
-        </select>
-      </div>
+      <label style="font-size: 13px; font-weight: 600; display: block; margin-bottom: 8px;">Chọn Bàn Mới (Đang Trống):</label>
+      <select name="toTableId" required style="width: 100%; padding: 10px 12px; border: 1px solid var(--admin-line); border-radius: 4px; font-size: 14px;">
+        <option value="" disabled selected>-- Chọn bàn muốn chuyển sang --</option>
+        <option th:each="at : ${availableTables}" th:value="${at.id}" th:text="${at.tableNumber} + ' (' + ${at.area} + ' - ' + ${at.capacity} + ' chỗ)'"></option>
+      </select>
+    </div>
 
-      <div class="modal-footer">
-        <button type="button" onclick="closeMoveTableModal()" class="btn-sm" style="background: #e5e5e5; padding: 10px 18px; border: none; cursor: pointer; border-radius: 4px; font-weight: 600;">Hủy</button>
-        <button type="submit" class="btn btn-primary" style="padding: 10px 24px; font-weight: 700;">🔄 Xác Nhận Đổi Bàn</button>
-      </div>
-    </form>
-  </div>
+    <div class="modal-footer">
+      <button type="button" onclick="closeMoveTableModal()" class="btn-sm" style="background: #e5e5e5; padding: 10px 18px; border: none; cursor: pointer; border-radius: 4px; font-weight: 600;">Hủy</button>
+      <button type="submit" class="btn btn-primary" style="padding: 10px 24px; font-weight: 700; background: var(--admin-gold); color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">
+        🔄 Xác Nhận Đổi Bàn
+      </button>
+    </div>
+  </form>
 </div>
 
 <!-- JAVASCRIPT ĐIỀU KHIỂN GIAO DIỆN PHỤC VỤ -->
@@ -514,6 +522,21 @@
   }
   function closeMoveTableModal() {
     document.getElementById('moveTableModal').classList.remove('active');
+  }
+
+  // Tăng giảm số lượng món
+  function changeQty(btn, delta) {
+    const container = btn.parentElement;
+    const input = container.querySelector('input[type="number"]');
+    let val = parseInt(input.value) || 0;
+    val = Math.max(0, Math.min(50, val + delta));
+    input.value = val;
+  }
+  function validateQty(input) {
+    let val = parseInt(input.value) || 0;
+    if (val < 0) val = 0;
+    if (val > 50) val = 50;
+    input.value = val;
   }
 </script>
 
