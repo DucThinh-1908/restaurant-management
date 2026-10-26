@@ -44,6 +44,7 @@ public class Reservation {
     public String getStatusBadgeClass() {
         if ("CONFIRMED".equalsIgnoreCase(status)) return "badge-success";
         if ("SEATED".equalsIgnoreCase(status)) return "badge-info";
+        if ("COMPLETED".equalsIgnoreCase(status)) return "badge-primary";
         if ("CANCELLED".equalsIgnoreCase(status)) return "badge-danger";
         return "badge-warning";
     }
@@ -52,6 +53,7 @@ public class Reservation {
         if ("PENDING".equalsIgnoreCase(status)) return "Chờ Lễ tân duyệt";
         if ("CONFIRMED".equalsIgnoreCase(status)) return "Đã xác nhận & Giữ bàn";
         if ("SEATED".equalsIgnoreCase(status)) return "Đang dùng bữa tại bàn";
+        if ("COMPLETED".equalsIgnoreCase(status)) return "Hoàn tất dùng bữa";
         if ("CANCELLED".equalsIgnoreCase(status)) return "Đã hủy";
         return status;
     }
