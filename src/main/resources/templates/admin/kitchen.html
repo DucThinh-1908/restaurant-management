@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title th:text="${pageTitle}">Điều Phối Bếp (KDS) | GoD Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Plus+Jakarta+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body class="admin-body">
+
+<div class="admin-layout">
+  <!-- Sidebar -->
+  <aside th:replace="~{admin/fragments/sidebar :: sidebar(${activeAdminPage})}"></aside>
+
+  <!-- Main Content -->
+  <div class="admin-main">
+    <header class="admin-topbar">
+      <div>
+        <h1 style="display: flex; align-items: center; gap: 10px;">
+          <span></span> Điều Phối Bếp (Kitchen Display System - KDS)
+        </h1>
+        <small style="color: var(--admin-text-muted);">Bảng điều phối chế biến theo thời gian thực dành cho Bếp Trưởng &amp; Đầu Bếp</small>
+      </div>
+
+      <div style="display: flex; gap: 12px; align-items: center;">
+        <a th:href="@{/admin/kitchen/recipes}" class="btn-sm" style="background: #fff; padding: 8px 14px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
+          <span></span> Sổ tay công thức món
+        </a>
+        <a href="#dish-stock-section" class="btn-sm" style="background: #fff; padding: 8px 14px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
+          <span></span> Báo Hết Món Nhanh
+        </a>
+      </div>
+    </header>
+
+    <div class="admin-content">
+
+      <!-- Thông báo kết quả thao tác -->
+      <div th:if="${successMessage}" style="background: #edf7ed; color: #1e4620; padding: 14px 18px; border-radius: 4px; margin-bottom: 22px; border: 1px solid #c2e2c4; font-weight: 500;">
+        <span th:text="${successMessage}"></span>
+      </div>
+
+      <!-- THANH TỔNG HỢP MÓN ĐANG CHỜ CHẾ BIẾN (BATCH COOKING SUMMARY) -->
+      <div class="kds-summary-bar">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <strong style="text-transform: uppercase; letter-spacing: .08em; font-size: 13px; color: var(--admin-gold); display: flex; align-items: center; gap: 6px;">
+            <span></span> Hàng Đợi Món
+          </strong>
+          <span style="font-size: 12px; color: var(--admin-text-muted);" th:text="'Đang chờ xử lý: ' + ${pendingCount + cookingCount} + ' đơn'"></span>
+        </div>
+
+        <div th:if="${not #maps.isEmpty(dishQueue)}" class="kds-queue-chips">
+          <div th:each="entry : ${dishQueue}" class="kds-queue-chip">
+            <span th:text="${entry.key}">Bò sốt tiêu đen</span>
+            <strong th:text="${entry.value} + ' suất'">2 suất</strong>
+          </div>
+        </div>
+
+        <div th:if="${#maps.isEmpty(dishQueue)}" style="margin-top: 10px; font-size: 13px; color: var(--admin-text-muted); font-style: italic;">
+           Hiện tại không có món ăn nào đang chờ chế biến. Bếp đã sẵn sàng cho các đơn tiếp theo!
+        </div>
+      </div>
+
+      <!-- THỐNG KÊ NHANH CA BẾP -->
+      <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px;">
+        <div class="admin-kpi-card" style="padding: 16px; border-left: 4px solid #f3cf7a;">
+          <span class="admin-kpi-title">Chờ nhận nấu</span>
+          <div class="admin-kpi-val" style="font-size: 24px; color: #8c6214;" th:text="${pendingCount}">0</div>
+          <small style="color: var(--admin-text-muted);">Cần nhận chế biến</small>
+        </div>
+        <div class="admin-kpi-card" style="padding: 16px; border-left: 4px solid #9ac2f4;">
+          <span class="admin-kpi-title">Đang trên chảo/bếp</span>
+          <div class="admin-kpi-val" style="font-size: 24px; color: #1a5699;" th:text="${cookingCount}">0</div>
+          <small style="color: var(--admin-text-muted);">Đang nấu dở</small>
+        </div>
+        <div class="admin-kpi-card" style="padding: 16px; border-left: 4px solid #a3dba7;">
+          <span class="admin-kpi-title">Sẵn sàng ra bàn</span>
+          <div class="admin-kpi-val" style="font-size: 24px; color: #1e5a22;" th:text="${servingCount}">0</div>
+          <small style="color: var(--admin-text-muted);">Chờ phục vụ bưng món</small>
+        </div>
+        <div class="admin-kpi-card" style="padding: 16px; border-left: 4px solid #b9955b;">
+          <span class="admin-kpi-title">Đã hoàn thành</span>
+          <div class="admin-kpi-val" style="font-size: 24px; color: var(--admin-gold-hover);" th:text="${completedCount}">0</div>
+          <small style="color: var(--admin-text-muted);">Đơn phục vụ xong</small>
+        </div>
+      </div>
+
+      <!-- BẢNG KANBAN KDS 3 CỘT -->
+      <div class="kds-board">
+
+        <!-- CỘT 1: CHỜ CHẾ BIẾN (PENDING) -->
+        <div class="kds-column kds-col-pending">
+          <div class="kds-column-header">
+            <span> 1. Chờ Chế Biến</span>
+            <span class="badge" style="background: #f3cf7a; color: #694a0d;" th:text="${pendingCount}">0</span>
+          </div>
+
+          <div class="kds-ticket-list">
+            <div th:each="order : ${ordersPending}" class="kds-ticket" th:classappend="${order.minutesWaiting > 15} ? 'ticket-urgent' : ''">
+              
+              <div class="kds-ticket-head">
+                <div>
+                  <div class="kds-ticket-code" th:text="${order.orderCode}">ORD-001</div>
+                  <strong style="font-size: 13px; color: var(--admin-text);" th:text="${order.orderTypeDisplayName}">Bàn T1-03</strong>
+                </div>
+                <div class="kds-timer-badge" th:classappend="${order.minutesWaiting > 15} ? 'kds-timer-urgent' : ''">
+                  <span th:text="'⏱ ' + ${order.minutesWaiting} + ' ph'">⏱ 5 ph</span>
+                </div>
+              </div>
+
+              <!-- Ghi chú chung của đơn -->
+              <div th:if="${order.note != null and not #strings.isEmpty(order.note)}" 
+                   style="background: #fff4e5; border-left: 3px solid #f27935; padding: 6px 10px; margin-bottom: 12px; font-size: 12px; color: #9c4109; border-radius: 2px;">
+                <strong>Lưu ý khách:</strong> <span th:text="${order.note}"></span>
+              </div>
+
+              <!-- Danh sách món -->
+              <ul class="kds-dish-list">
+                <li th:each="item : ${order.items}" class="kds-dish-item">
+                  <div style="flex: 1;">
+                    <span class="kds-dish-qty" th:text="${item.quantity} + 'x'">1x</span>
+                    <strong th:text="${item.itemName}" style="font-size: 14px;">Bò sốt tiêu đen</strong>
+                    <div th:if="${item.note != null and not #strings.isEmpty(item.note)}" 
+                         class="kds-dish-note" th:text="'Yêu cầu: ' + ${item.note}">
+                    </div>
+                  </div>
+                </li>
+              </ul>
+
+              <!-- Nút hành động: Bắt đầu nấu -->
+              <form th:action="@{/admin/kitchen/update-status}" method="post">
+                <input type="hidden" name="id" th:value="${order.id}">
+                <input type="hidden" name="status" value="COOKING">
+                <button type="submit" class="kds-action-btn kds-btn-start">
+                   Bắt Đầu Nấu
+                </button>
+              </form>
+
+            </div>
+
+            <div th:if="${ordersPending == null or #lists.isEmpty(ordersPending)}" style="text-align: center; color: var(--admin-text-muted); padding: 40px 20px; font-size: 13px;">
+              Trống - Không có đơn mới
+            </div>
+          </div>
+        </div>
+
+        <!-- CỘT 2: ĐANG CHẾ BIẾN (COOKING) -->
+        <div class="kds-column kds-col-cooking">
+          <div class="kds-column-header">
+            <span> 2. Đang Chế Biến Trên Bếp</span>
+            <span class="badge" style="background: #9ac2f4; color: #123d6e;" th:text="${cookingCount}">0</span>
+          </div>
+
+          <div class="kds-ticket-list">
+            <div th:each="order : ${ordersCooking}" class="kds-ticket" th:classappend="${order.minutesWaiting > 20} ? 'ticket-urgent' : ''" style="border-top: 3px solid #1a5699;">
+              
+              <div class="kds-ticket-head">
+                <div>
+                  <div class="kds-ticket-code" th:text="${order.orderCode}">ORD-002</div>
+                  <strong style="font-size: 13px; color: var(--admin-text);" th:text="${order.orderTypeDisplayName}">Bàn T1-01</strong>
+                </div>
+                <div class="kds-timer-badge" th:classappend="${order.minutesWaiting > 20} ? 'kds-timer-urgent' : ''" style="background: #e6f0fa; color: #1a5699;">
+                  <span th:text="'⏱ ' + ${order.minutesWaiting} + ' ph'">⏱ 12 ph</span>
+                </div>
+              </div>
+
+              <!-- Ghi chú chung của đơn -->
+              <div th:if="${order.note != null and not #strings.isEmpty(order.note)}" 
+                   style="background: #fff4e5; border-left: 3px solid #f27935; padding: 6px 10px; margin-bottom: 12px; font-size: 12px; color: #9c4109; border-radius: 2px;">
+                <strong>Lưu ý:</strong> <span th:text="${order.note}"></span>
+              </div>
+
+              <!-- Danh sách món -->
+              <ul class="kds-dish-list">
+                <li th:each="item : ${order.items}" class="kds-dish-item">
+                  <div style="flex: 1;">
+                    <span class="kds-dish-qty" th:text="${item.quantity} + 'x'">1x</span>
+                    <strong th:text="${item.itemName}" style="font-size: 14px;">Gà nướng than hoa</strong>
+                    <div th:if="${item.note != null and not #strings.isEmpty(item.note)}" 
+                         class="kds-dish-note" th:text="'Yêu cầu: ' + ${item.note}">
+                    </div>
+                  </div>
+                </li>
+              </ul>
+
+              <!-- Nút hành động: Nấu xong -->
+              <form th:action="@{/admin/kitchen/update-status}" method="post">
+                <input type="hidden" name="id" th:value="${order.id}">
+                <input type="hidden" name="status" value="SERVING">
+                <button type="submit" class="kds-action-btn kds-btn-finish">
+                   Nấu Xong
+                </button>
+              </form>
+
+            </div>
+
+            <div th:if="${ordersCooking == null or #lists.isEmpty(ordersCooking)}" style="text-align: center; color: var(--admin-text-muted); padding: 40px 20px; font-size: 13px;">
+              Trống - Chưa có đơn nào đang nấu
+            </div>
+          </div>
+        </div>
+
+        <!-- CỘT 3: SẴN SÀNG PHỤC VỤ (SERVING) -->
+        <div class="kds-column kds-col-serving">
+          <div class="kds-column-header">
+            <span> 3. Sẵn Sàng Ra Bàn / Đóng Gói</span>
+            <span class="badge" style="background: #a3dba7; color: #164619;" th:text="${servingCount}">0</span>
+          </div>
+
+          <div class="kds-ticket-list">
+            <div th:each="order : ${ordersServing}" class="kds-ticket" style="border-top: 3px solid #1f7a26;">
+              
+              <div class="kds-ticket-head">
+                <div>
+                  <div class="kds-ticket-code" th:text="${order.orderCode}">ORD-003</div>
+                  <strong style="font-size: 13px; color: var(--admin-text);" th:text="${order.orderTypeDisplayName}">Mang về</strong>
+                </div>
+                <div class="kds-timer-badge" style="background: #eaf6ea; color: #1f7a26;">
+                  <span> Nấu xong</span>
+                </div>
+              </div>
+
+              <!-- Danh sách món -->
+              <ul class="kds-dish-list">
+                <li th:each="item : ${order.items}" class="kds-dish-item">
+                  <div style="flex: 1;">
+                    <span class="kds-dish-qty" th:text="${item.quantity} + 'x'">1x</span>
+                    <span th:text="${item.itemName}" style="font-size: 13px; font-weight: 600;">Cá chẽm áp chảo</span>
+                  </div>
+                  <span style="font-size: 11px; color: #1f7a26; font-weight: bold;">ĐÃ XONG</span>
+                </li>
+              </ul>
+
+              <!-- Nút hành động: Phục vụ xong -->
+              <form th:action="@{/admin/kitchen/update-status}" method="post">
+                <input type="hidden" name="id" th:value="${order.id}">
+                <input type="hidden" name="status" value="COMPLETED">
+                <button type="submit" class="kds-action-btn kds-btn-served">
+                   Đã Phục Vụ Khách
+                </button>
+              </form>
+
+            </div>
+
+            <div th:if="${ordersServing == null or #lists.isEmpty(ordersServing)}" style="text-align: center; color: var(--admin-text-muted); padding: 40px 20px; font-size: 13px;">
+              Trống - Không có đơn chờ bưng món
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- BẢNG BẬT/TẮT HẾT MÓN NHANH TẠI BẾP (OUT OF STOCK / 86'd) -->
+      <div id="dish-stock-section" class="admin-card" style="margin-top: 40px;">
+        <div class="admin-card-header">
+          <div>
+            <h2> Báo Tình Trạng Món Ăn Tại Bếp (In-Stock / Out-of-Stock)</h2>
+            <small style="color: var(--admin-text-muted);">Khi nguyên liệu bị thiếu, Bếp trưởng bấm để khóa món ngay lập tức, ngăn khách hàng đặt thêm.</small>
+          </div>
+          <span style="font-size: 13px; color: var(--admin-text-muted);" th:text="'Tổng số: ' + ${menuItems.size()} + ' món'"></span>
+        </div>
+
+        <div style="padding: 20px;">
+          <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px;">
+            <div th:each="item : ${menuItems}" 
+                 style="background: #fff; border: 1px solid var(--admin-line); border-radius: 6px; padding: 14px; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+              <div style="display: flex; align-items: center; gap: 10px; min-width: 0;">
+                <img th:if="${item.imageUrl != null}" th:src="${item.imageUrl}" 
+                     style="width: 44px; height: 44px; object-fit: cover; border-radius: 4px; border: 1px solid var(--admin-line); flex-shrink: 0;">
+                <div style="min-width: 0;">
+                  <strong th:text="${item.name}" style="font-size: 13px; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Món ăn</strong>
+                  <span th:text="${item.category}" style="font-size: 11px; color: var(--admin-text-muted);">Món chính</span>
+                </div>
+              </div>
+
+              <form th:action="@{/admin/kitchen/toggle-available}" method="post">
+                <input type="hidden" name="id" th:value="${item.id}">
+                <button type="submit" class="btn-sm" 
+                        th:classappend="${item.available ? 'btn-success' : 'btn-danger'}"
+                        style="white-space: nowrap; font-weight: bold; font-size: 11px; padding: 6px 10px;">
+                  <span th:text="${item.available ? '✓ Còn món' : '✕ HẾT HÀNG'}"></span>
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

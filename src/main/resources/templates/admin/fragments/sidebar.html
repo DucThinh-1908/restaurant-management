@@ -11,7 +11,7 @@
     <!-- Bảng điều khiển chung (ADMIN / MANAGER) -->
     <a th:if="${employee.roleName == 'ADMIN' or employee.roleName == 'MANAGER'}" 
        th:href="@{/admin}" th:classappend="${activeAdminPage == 'dashboard'} ? 'active' : ''">
-      <span class="admin-nav-icon">📊</span> Bảng Điều Khiển
+      <span class="admin-nav-icon"></span> Bảng Điều Khiển
     </a>
 
     <!-- NGHIỆP VỤ LỄ TÂN (RECEPTIONIST, ADMIN, MANAGER) -->
@@ -22,43 +22,55 @@
     <!-- Đặt bàn (Chuyên trách Lễ tân) -->
     <a th:if="${employee.roleName == 'RECEPTIONIST' or employee.roleName == 'ADMIN' or employee.roleName == 'MANAGER'}"
        th:href="@{/admin/reservations}" th:classappend="${activeAdminPage == 'reservations'} ? 'active' : ''">
-      <span class="admin-nav-icon">📅</span> Đặt Bàn (Lễ Tân)
+      <span class="admin-nav-icon"></span> Đặt Bàn (Lễ Tân)
     </a>
 
     <!-- Sơ đồ bàn (Lễ tân, Phục vụ, Quản lý) -->
     <a th:if="${employee.roleName == 'RECEPTIONIST' or employee.roleName == 'WAITER' or employee.roleName == 'ADMIN' or employee.roleName == 'MANAGER'}"
        th:href="@{/admin/tables}" th:classappend="${activeAdminPage == 'tables'} ? 'active' : ''">
-      <span class="admin-nav-icon">🪑</span> Sơ Đồ Bàn Ăn
+      <span class="admin-nav-icon"></span> Sơ Đồ Bàn Ăn
+    </a>
+
+    <!-- ĐIỀU PHỐI BẾP (CHEF, ADMIN, MANAGER) -->
+    <a th:if="${employee.roleName == 'CHEF' or employee.roleName == 'ADMIN' or employee.roleName == 'MANAGER'}"
+       th:href="@{/admin/kitchen}" th:classappend="${activeAdminPage == 'kitchen'} ? 'active' : ''">
+      <span class="admin-nav-icon"></span> Điều Phối Bếp (KDS)
+    </a>
+
+    <!-- Sổ tay công thức & Định lượng (CHEF, ADMIN, MANAGER) -->
+    <a th:if="${employee.roleName == 'CHEF' or employee.roleName == 'ADMIN' or employee.roleName == 'MANAGER'}"
+       th:href="@{/admin/kitchen/recipes}" th:classappend="${activeAdminPage == 'recipes'} ? 'active' : ''">
+      <span class="admin-nav-icon"></span> Công Thức &amp; Định Lượng
     </a>
 
     <!-- Đơn hàng (Thu ngân, Phục vụ, Bếp, Quản lý) -->
-    <a th:if="${employee.roleName == 'CASHIER' or employee.roleName == 'CHEF' or employee.roleName == 'WAITER' or employee.roleName == 'ADMIN' or employee.roleName == 'MANAGER'}"
+    <a th:if="${employee.roleName == 'CASHIER' or employee.roleName == 'WAITER' or employee.roleName == 'ADMIN' or employee.roleName == 'MANAGER'}"
        th:href="@{/admin/orders}" th:classappend="${activeAdminPage == 'orders'} ? 'active' : ''">
-      <span class="admin-nav-icon">🛒</span> Quản Lý Đơn Hàng
+      <span class="admin-nav-icon"></span> Quản Lý Đơn Hàng (Thu Ngân)
     </a>
 
-    <!-- Thực đơn (Bếp, Quản lý, Admin) -->
-    <a th:if="${employee.roleName == 'CHEF' or employee.roleName == 'ADMIN' or employee.roleName == 'MANAGER'}"
+    <!-- Thực đơn (Chỉ Quản lý, Admin) -->
+    <a th:if="${employee.roleName == 'ADMIN' or employee.roleName == 'MANAGER'}"
        th:href="@{/admin/menu}" th:classappend="${activeAdminPage == 'menu'} ? 'active' : ''">
-      <span class="admin-nav-icon">🍲</span> Quản Lý Thực Đơn
+      <span class="admin-nav-icon"></span> Quản Lý Thực Đơn
     </a>
 
-    <!-- Quản lý kho (Thủ kho, Bếp trưởng, Quản lý) -->
-    <a th:if="${employee.roleName == 'STOREKEEPER' or employee.roleName == 'CHEF' or employee.roleName == 'ADMIN' or employee.roleName == 'MANAGER'}"
+    <!-- Quản lý kho (Thủ kho, Quản lý, Admin) -->
+    <a th:if="${employee.roleName == 'STOREKEEPER' or employee.roleName == 'ADMIN' or employee.roleName == 'MANAGER'}"
        th:href="@{/admin/inventory}" th:classappend="${activeAdminPage == 'inventory'} ? 'active' : ''">
-      <span class="admin-nav-icon">📦</span> Quản Lý Kho (Thủ Kho)
+      <span class="admin-nav-icon"></span> Quản Lý Kho (Thủ Kho)
     </a>
 
     <!-- Quản trị nhân sự (Chỉ ADMIN & MANAGER) -->
     <a th:if="${employee.roleName == 'ADMIN' or employee.roleName == 'MANAGER'}"
        th:href="@{/admin/staff}" th:classappend="${activeAdminPage == 'staff'} ? 'active' : ''">
-      <span class="admin-nav-icon">👥</span> Quản Lý Nhân Sự (7 Roles)
+      <span class="admin-nav-icon"></span> Quản Lý Nhân Sự (7 Roles)
     </a>
 
     <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.08); margin: 14px 20px;">
     
     <a th:href="@{/}" target="_blank">
-      <span class="admin-nav-icon">🌐</span> Xem Website Khách
+      <span class="admin-nav-icon"></span> Xem Website Khách
     </a>
   </nav>
 
@@ -71,7 +83,7 @@
       </div>
     </div>
     <a th:href="@{/admin/logout}" style="color: #e06c75; text-decoration: none; font-size: 12px; display: flex; align-items: center; gap: 6px;">
-      <span>🚪</span> Đăng xuất ca làm việc
+      <span></span> Đăng xuất ca làm việc
     </a>
   </div>
 </aside>

@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title th:text="${pageTitle}">Sổ Tay Công Thức Món | Duc Thinh Restaurant</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Plus+Jakarta+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body class="admin-body">
+
+<div class="admin-layout">
+  <!-- Sidebar -->
+  <aside th:replace="~{admin/fragments/sidebar :: sidebar(${activeAdminPage})}"></aside>
+
+  <!-- Main Content -->
+  <div class="admin-main">
+    <header class="admin-topbar">
+      <div>
+        <h1 style="display: flex; align-items: center; gap: 10px;">
+          <span></span>Sổ Tay Công Thức &amp; Định Lượng Chuẩn (Culinary SOP)
+        </h1>
+        <small style="color: var(--admin-text-muted);">Quy chuẩn định lượng nguyên liệu, kỹ thuật nấu, bài trí đĩa và kiểm soát dị ứng</small>
+      </div>
+
+      <div style="display: flex; gap: 10px;">
+        <a th:href="@{/admin/kitchen}" class="btn-gold" style="font-size: 12px; padding: 8px 16px;">
+          <span></span> Về Màn Hình Điều Phối Bếp
+        </a>
+      </div>
+    </header>
+
+    <div class="admin-content">
+
+      <!-- Danh sách thẻ công thức món -->
+      <div class="recipe-grid">
+        <div th:each="recipe : ${recipes}" class="recipe-card">
+          
+          <img th:src="${recipe.imageUrl}" th:alt="${recipe.dishName}" class="recipe-img">
+
+          <div class="recipe-body">
+            <!-- Header món -->
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+              <div>
+                <span style="font-size: 10px; text-transform: uppercase; letter-spacing: .12em; color: var(--admin-gold); font-weight: bold;" th:text="${recipe.category}">Món chính</span>
+                <h3 style="margin: 2px 0 0; font-size: 18px; font-weight: 700; color: var(--admin-text);" th:text="${recipe.dishName}">Tên món ăn</h3>
+              </div>
+            </div>
+
+            <!-- Thời gian & Cảnh báo dị ứng -->
+            <div style="display: flex; gap: 15px; background: #faf7f2; padding: 10px 14px; border-radius: 4px; font-size: 12px; margin: 12px 0;">
+              <div>
+                <span style="color: var(--admin-text-muted); display: block;">Sơ chế:</span>
+                <strong th:text="${recipe.prepTime}">15 phút</strong>
+              </div>
+              <div>
+                <span style="color: var(--admin-text-muted); display: block;">Thời gian nấu:</span>
+                <strong th:text="${recipe.cookTime}">25 phút</strong>
+              </div>
+              <div>
+                <span style="color: var(--admin-text-muted); display: block;">Cảnh báo dị ứng:</span>
+                <strong style="color: #c81e1e;" th:text="${recipe.allergens}">Không</strong>
+              </div>
+            </div>
+
+            <!-- Bảng định lượng nguyên liệu (BOM) -->
+            <div style="margin-bottom: 16px;">
+              <strong style="font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--admin-text); display: block; margin-bottom: 6px;">
+                 Định lượng nguyên liệu (1 suất chuẩn):
+              </strong>
+              <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+                <tbody>
+                  <tr th:each="ing : ${recipe.ingredients}" style="border-bottom: 1px dashed #ede7dc;">
+                    <td style="padding: 5px 0;">
+                      <span th:text="${ing.name}" style="font-weight: 600;">Thịt bò Wagyu</span>
+                      <small th:if="${ing.note != null}" th:text="' (' + ${ing.note} + ')'" style="color: var(--admin-text-muted); display: block; font-size: 11px;"></small>
+                    </td>
+                    <td style="padding: 5px 0; text-align: right; font-weight: bold; color: var(--admin-gold-hover); white-space: nowrap;" th:text="${ing.quantity}">350g</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Hướng dẫn bài trí đĩa -->
+            <div style="background: #f0f7f0; border-left: 3px solid #28a745; padding: 8px 12px; border-radius: 2px; font-size: 12px; margin-bottom: 12px;">
+              <strong style="color: #1e5a22; display: block; margin-bottom: 2px;"> Quy chuẩn bài trí (Plating):</strong>
+              <span th:text="${recipe.platingStyle}" style="color: #2b442d;"></span>
+            </div>
+
+            <!-- Lưu ý của Bếp Trưởng -->
+            <div style="background: #fff8e6; border-left: 3px solid var(--admin-gold); padding: 8px 12px; border-radius: 2px; font-size: 12px; margin-bottom: 14px;">
+              <strong style="color: #8c6214; display: block; margin-bottom: 2px;"> Bí quyết Bếp Trưởng:</strong>
+              <span th:text="${recipe.chefNote}" style="color: #554117;"></span>
+            </div>
+
+            <!-- Các bước chế biến -->
+            <details style="font-size: 12px; cursor: pointer;">
+              <summary style="font-weight: 700; color: var(--admin-gold-hover); padding: 6px 0;">
+                 Xem quy trình 5 bước nấu chi tiết
+              </summary>
+              <ol style="margin: 8px 0 0; padding-left: 18px; line-height: 1.6; color: #444;">
+                <li th:each="step : ${recipe.steps}" th:text="${step}" style="margin-bottom: 4px;"></li>
+              </ol>
+            </details>
+
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

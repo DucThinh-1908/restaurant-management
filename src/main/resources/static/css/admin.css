@@ -269,3 +269,225 @@ body.admin-body {
 .status-completed, .status-available { background: #d4edda; color: #155724; }
 .status-cancelled, .status-suspended { background: #f8d7da; color: #721c24; }
 .status-reserved { background: #e2e3e5; color: #383d41; }
+
+/* ========================================================
+   KITCHEN DISPLAY SYSTEM (KDS) & RECIPE GUIDE STYLES
+   ======================================================== */
+.kds-summary-bar {
+  background: #ffffff;
+  border: 1px solid var(--admin-line);
+  border-radius: 6px;
+  padding: 16px 20px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+}
+.kds-queue-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 10px;
+}
+.kds-queue-chip {
+  background: #fdf8ee;
+  border: 1px solid #f3e2be;
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #7a5416;
+}
+.kds-queue-chip strong {
+  background: var(--admin-gold);
+  color: white;
+  border-radius: 12px;
+  padding: 2px 8px;
+  font-size: 11px;
+}
+
+.kds-board {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 22px;
+  align-items: start;
+}
+@media (max-width: 1100px) {
+  .kds-board { grid-template-columns: 1fr; }
+}
+
+.kds-column {
+  background: #f7f5f0;
+  border: 1px solid var(--admin-line);
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.kds-column-header {
+  padding: 16px 18px;
+  font-weight: 700;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 2px solid;
+}
+.kds-col-pending .kds-column-header {
+  background: #fff8e6;
+  color: #8c6214;
+  border-bottom-color: #f3cf7a;
+}
+.kds-col-cooking .kds-column-header {
+  background: #edf5fe;
+  color: #1a5699;
+  border-bottom-color: #9ac2f4;
+}
+.kds-col-serving .kds-column-header {
+  background: #edf7ed;
+  color: #1e5a22;
+  border-bottom-color: #a3dba7;
+}
+
+.kds-ticket-list {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 250px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.kds-ticket {
+  background: #ffffff;
+  border: 1px solid var(--admin-line);
+  border-radius: 6px;
+  padding: 16px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+  transition: transform .15s, box-shadow .15s;
+  position: relative;
+}
+.kds-ticket:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.07);
+}
+.kds-ticket.ticket-urgent {
+  border: 2px solid #e05252;
+}
+
+.kds-ticket-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  border-bottom: 1px dashed var(--admin-line);
+  padding-bottom: 10px;
+  margin-bottom: 12px;
+}
+.kds-ticket-code {
+  font-family: monospace;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--admin-gold);
+}
+.kds-timer-badge {
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-weight: 600;
+  background: #eee;
+  color: #555;
+}
+.kds-timer-urgent {
+  background: #fde8e8;
+  color: #c81e1e;
+  font-weight: 700;
+}
+
+.kds-dish-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 14px 0;
+}
+.kds-dish-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid #f2ede4;
+  font-size: 13px;
+}
+.kds-dish-qty {
+  font-weight: 800;
+  font-size: 14px;
+  color: var(--admin-text);
+  margin-right: 8px;
+  min-width: 28px;
+}
+.kds-dish-note {
+  display: block;
+  font-size: 12px;
+  color: #b84d14;
+  background: #fef4ee;
+  border-left: 2px solid #f27935;
+  padding: 2px 6px;
+  margin-top: 4px;
+  border-radius: 2px;
+  font-style: italic;
+}
+
+.kds-action-btn {
+  width: 100%;
+  padding: 10px;
+  border: none;
+  border-radius: 4px;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: opacity .2s;
+}
+.kds-btn-start {
+  background: #e28710;
+  color: #fff;
+}
+.kds-btn-start:hover { background: #c67207; }
+.kds-btn-finish {
+  background: #1f7a26;
+  color: #fff;
+}
+.kds-btn-finish:hover { background: #17611c; }
+.kds-btn-served {
+  background: #475569;
+  color: #fff;
+}
+.kds-btn-served:hover { background: #334155; }
+
+/* Recipe Guide */
+.recipe-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: 24px;
+}
+.recipe-card {
+  background: #fff;
+  border: 1px solid var(--admin-line);
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.03);
+  display: flex;
+  flex-direction: column;
+}
+.recipe-img {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+}
+.recipe-body {
+  padding: 20px;
+  flex: 1;
+}
