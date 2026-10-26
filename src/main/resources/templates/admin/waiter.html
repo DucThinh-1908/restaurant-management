@@ -129,14 +129,14 @@
             <div class="table-card-body">
               <!-- TRƯỜNG HỢP: BÀN TRỐNG (AVAILABLE) -->
               <div th:if="${table.status == 'AVAILABLE'}" style="text-align: center; padding: 20px 10px; color: var(--admin-text-muted);">
-                <div style="font-size: 32px; margin-bottom: 8px;">✨</div>
+                <div style="font-size: 32px; margin-bottom: 8px;"></div>
                 <div style="font-weight: 600; color: #1f7a26;">Bàn Sạch Sẽ - Sẵn Sàng</div>
                 <p style="font-size: 12px; margin: 6px 0 0;">Chào đón khách mới và mở bàn để bắt đầu gọi món</p>
               </div>
 
               <!-- TRƯỜNG HỢP: BÀN ĐÃ ĐẶT TRƯỚC (RESERVED) -->
               <div th:if="${table.status == 'RESERVED'}" style="text-align: center; padding: 20px 10px; color: var(--admin-text-muted);">
-                <div style="font-size: 32px; margin-bottom: 8px;">📋</div>
+                <div style="font-size: 32px; margin-bottom: 8px;"></div>
                 <div style="font-weight: 600; color: #d97706;">Bàn Đã Được Đặt Trước</div>
                 <p style="font-size: 12px; margin: 6px 0 0;">Vui lòng chuẩn bị ly, khăn, menu để sẵn sàng đón khách</p>
               </div>
@@ -157,9 +157,9 @@
 
                     <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 12px;">
                       <span style="color: var(--admin-text-muted);">Trạng thái bếp:</span>
-                      <span th:if="${currOrder.status == 'PENDING'}" style="color: #d97706; font-weight: 600;">⏳ Bếp chờ nhận</span>
-                      <span th:if="${currOrder.status == 'COOKING'}" style="color: #e28710; font-weight: 600;">👨‍🍳 Đang nấu</span>
-                      <span th:if="${currOrder.status == 'SERVING'}" style="color: #1f7a26; font-weight: 700;">✅ Sẵn sàng ra món</span>
+                      <span th:if="${currOrder.status == 'PENDING'}" style="color: #d97706; font-weight: 600;"> Bếp chờ nhận</span>
+                      <span th:if="${currOrder.status == 'COOKING'}" style="color: #e28710; font-weight: 600;"> Đang nấu</span>
+                      <span th:if="${currOrder.status == 'SERVING'}" style="color: #1f7a26; font-weight: 700;"> Sẵn sàng ra món</span>
                     </div>
 
                     <div style="display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 12px; border-bottom: 1px dashed var(--admin-line); padding-bottom: 8px;">

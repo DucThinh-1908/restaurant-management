@@ -40,7 +40,13 @@ public class AdminTableController {
                            @RequestParam("capacity") int capacity,
                            HttpSession session,
                            RedirectAttributes redirectAttributes) {
-        if (session.getAttribute("loggedInEmployee") == null) return "redirect:/admin/login";
+        Employee emp = (Employee) session.getAttribute("loggedInEmployee");
+        if (emp == null) return "redirect:/admin/login";
+
+        if (!"ADMIN".equalsIgnoreCase(emp.getRoleName()) && !"MANAGER".equalsIgnoreCase(emp.getRoleName())) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Từ chối quyền: Chỉ Quản Lý (MANAGER) hoặc Quản Trị Viên (ADMIN) mới được phép thêm bàn mới!");
+            return "redirect:/admin/tables";
+        }
 
         DiningTable table = new DiningTable(null, tableNumber, area, capacity, "AVAILABLE");
         boolean success = tableService.addTable(table);

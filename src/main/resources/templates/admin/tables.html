@@ -14,7 +14,8 @@
   <div class="admin-main">
     <header class="admin-topbar">
       <h1>Sơ Đồ &amp; Quản Lý Bàn Ăn</h1>
-      <button onclick="document.getElementById('addTableModal').style.display='block'" class="btn-gold">
+      <button th:if="${employee != null and (employee.roleName == 'ADMIN' or employee.roleName == 'MANAGER')}" 
+              onclick="document.getElementById('addTableModal').style.display='block'" class="btn-gold">
         + Thêm Bàn Mới
       </button>
     </header>
@@ -63,8 +64,9 @@
   </div>
 </div>
 
-<!-- Modal Thêm Bàn Mới -->
-<div id="addTableModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; place-items: center; padding: 20px;">
+<!-- Modal Thêm Bàn Mới (Chỉ dành cho ADMIN và MANAGER) -->
+<div th:if="${employee != null and (employee.roleName == 'ADMIN' or employee.roleName == 'MANAGER')}" 
+     id="addTableModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; place-items: center; padding: 20px;">
   <div style="background: white; width: min(440px, 100%); margin: 80px auto; padding: 28px; border-radius: 6px; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
       <h3 style="margin: 0; font-size: 18px;">Thêm Bàn Ăn Mới</h3>
