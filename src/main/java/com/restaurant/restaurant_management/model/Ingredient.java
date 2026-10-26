@@ -29,6 +29,24 @@ public class Ingredient {
         return stockQuantity.compareTo(minStockLevel) <= 0;
     }
 
+    public String getFormattedCostPrice() {
+        if (costPrice == null) return "0 đ";
+        java.text.DecimalFormat df = new java.text.DecimalFormat("#,###");
+        return df.format(costPrice) + " đ";
+    }
+
+    public String getFormattedStockQuantity() {
+        if (stockQuantity == null) return "0";
+        java.text.DecimalFormat df = new java.text.DecimalFormat("#,##0.###");
+        return df.format(stockQuantity);
+    }
+
+    public String getFormattedMinStockLevel() {
+        if (minStockLevel == null) return "0";
+        java.text.DecimalFormat df = new java.text.DecimalFormat("#,##0.###");
+        return df.format(minStockLevel);
+    }
+
     public Long getId() {
         return id;
     }
