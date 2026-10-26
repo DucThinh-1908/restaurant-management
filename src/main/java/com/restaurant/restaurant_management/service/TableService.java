@@ -45,6 +45,24 @@ public class TableService {
     public synchronized List<DiningTable> getAllTables() {
         if (jdbcTemplate != null) {
             try {
+                // Tự động đồng bộ trạng thái bàn ăn với các đơn đặt bàn đang ngồi / đang giữ bàn
+                try {
+                    jdbcTemplate.update(
+                        "UPDATE dining_tables t " +
+                        "JOIN reservations r ON r.table_id = t.id " +
+                        "SET t.status = 'OCCUPIED' " +
+                        "WHERE r.status = 'SEATED' AND t.status != 'OCCUPIED'"
+                    );
+                    jdbcTemplate.update(
+                        "UPDATE dining_tables t " +
+                        "JOIN reservations r ON r.table_id = t.id " +
+                        "SET t.status = 'RESERVED' " +
+                        "WHERE r.status = 'CONFIRMED' AND t.status = 'AVAILABLE'"
+                    );
+                } catch (Exception syncEx) {
+                    // Không chặn truy vấn nếu bảng đang khóa hoặc có lỗi nhỏ
+                }
+
                 String sql = "SELECT id, table_number, area, capacity, status FROM dining_tables ORDER BY id ASC";
                 return jdbcTemplate.query(sql, (rs, rowNum) -> mapRowToTable(rs));
             } catch (Exception e) {

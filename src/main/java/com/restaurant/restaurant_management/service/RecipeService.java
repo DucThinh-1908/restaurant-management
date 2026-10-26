@@ -13,8 +13,10 @@ import java.util.Optional;
 public class RecipeService {
 
     private final List<Recipe> recipes = new ArrayList<>();
+    private final org.springframework.jdbc.core.JdbcTemplate jdbcTemplate;
 
-    public RecipeService() {
+    public RecipeService(@org.springframework.beans.factory.annotation.Autowired(required = false) org.springframework.jdbc.core.JdbcTemplate jdbcTemplate) {
+        this.jdbcTemplate = jdbcTemplate;
         // 1. Slow-Braised Beef (Bò sốt tiêu đen thượng hạng)
         recipes.add(new Recipe(
                 7L,
@@ -152,11 +154,39 @@ public class RecipeService {
     }
 
     public List<Recipe> getAllRecipes() {
-        return new ArrayList<>(recipes);
+        List<Recipe> list = new ArrayList<>(recipes);
+        if (jdbcTemplate != null) {
+            try {
+                for (Recipe r : list) {
+                    String sql = "SELECT ing.name, ri.quantity_required, ing.unit, ri.note " +
+                                 "FROM recipe_items ri " +
+                                 "JOIN ingredients ing ON ri.ingredient_id = ing.id " +
+                                 "WHERE ri.menu_item_id = ?";
+                    List<RecipeIngredient> dbIngredients = jdbcTemplate.query(sql, (rs, rowNum) -> {
+                        String qty = rs.getBigDecimal("quantity_required") + " " + rs.getString("unit");
+                        return new RecipeIngredient(rs.getString("name"), qty, rs.getString("note"));
+                    }, r.getMenuItemId());
+                    if (!dbIngredients.isEmpty()) {
+                        List<RecipeIngredient> merged = new ArrayList<>(dbIngredients);
+                        if (r.getIngredients() != null) {
+                            for (RecipeIngredient def : r.getIngredients()) {
+                                if (merged.stream().noneMatch(m -> m.getName().equalsIgnoreCase(def.getName()))) {
+                                    merged.add(def);
+                                }
+                            }
+                        }
+                        r.setIngredients(merged);
+                    }
+                }
+            } catch (Exception e) {
+                System.err.println("Lỗi query recipe_items từ MySQL: " + e.getMessage());
+            }
+        }
+        return list;
     }
 
     public Optional<Recipe> findByMenuItemId(Long menuItemId) {
         if (menuItemId == null) return Optional.empty();
-        return recipes.stream().filter(r -> r.getMenuItemId().equals(menuItemId)).findFirst();
+        return getAllRecipes().stream().filter(r -> r.getMenuItemId().equals(menuItemId)).findFirst();
     }
 }
