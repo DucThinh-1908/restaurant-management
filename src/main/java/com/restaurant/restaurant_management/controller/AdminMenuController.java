@@ -25,6 +25,9 @@ public class AdminMenuController {
     public String listMenu(HttpSession session, Model model) {
         Employee emp = (Employee) session.getAttribute("loggedInEmployee");
         if (emp == null) return "redirect:/admin/login";
+        if (!"ADMIN".equalsIgnoreCase(emp.getRoleName()) && !"MANAGER".equalsIgnoreCase(emp.getRoleName())) {
+            return "redirect:/admin/kitchen";
+        }
 
         model.addAttribute("activeAdminPage", "menu");
         model.addAttribute("pageTitle", "Quản Lý Thực Đơn | GoD Admin");
