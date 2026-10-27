@@ -198,6 +198,10 @@ public class OrderService {
     }
 
     public synchronized void updateOrderStatus(Long orderId, String status) {
+        updateOrderStatus(orderId, status, null);
+    }
+
+    public synchronized void updateOrderStatus(Long orderId, String status, Long employeeId) {
         if (orderId == null || status == null) return;
         if (jdbcTemplate != null) {
             try {
@@ -207,7 +211,7 @@ public class OrderService {
                 // Cập nhật trạng thái các món chi tiết
                 if ("COOKING".equalsIgnoreCase(status)) {
                     jdbcTemplate.update("UPDATE order_items SET status = 'COOKING' WHERE order_id = ? AND status = 'PENDING'", orderId);
-                    deductInventoryForOrder(orderId);
+                    deductInventoryForOrder(orderId, employeeId);
                 } else if ("COMPLETED".equalsIgnoreCase(status) || "SERVING".equalsIgnoreCase(status)) {
                     jdbcTemplate.update("UPDATE order_items SET status = 'SERVED' WHERE order_id = ? AND status != 'CANCELLED'", orderId);
                 }
@@ -219,7 +223,7 @@ public class OrderService {
         inMemoryOrders.stream().filter(o -> o.getId().equals(orderId)).findFirst().ifPresent(o -> o.setStatus(status));
     }
 
-    private void deductInventoryForOrder(Long orderId) {
+    private void deductInventoryForOrder(Long orderId, Long employeeId) {
         if (jdbcTemplate == null || orderId == null) return;
         try {
             // Kiểm tra đã trừ kho cho order này chưa để tránh trừ trùng lặp
@@ -238,6 +242,8 @@ public class OrderService {
                            "WHERE oi.order_id = ? AND oi.status != 'CANCELLED'";
 
             List<Map<String, Object>> rows = jdbcTemplate.queryForList(query, orderId);
+            long actingEmployeeId = (employeeId != null ? employeeId : 5L);
+
             for (Map<String, Object> row : rows) {
                 Long ingredientId = ((Number) row.get("ingredient_id")).longValue();
                 BigDecimal totalQtyNeeded = (BigDecimal) row.get("total_qty_needed");
@@ -245,20 +251,68 @@ public class OrderService {
                 Integer dishQty = ((Number) row.get("dish_qty")).intValue();
                 BigDecimal costPrice = (BigDecimal) row.get("cost_price");
 
-                // Trừ tồn kho trong DB
+                // Trừ tồn kho trong DB (không để âm dưới 0)
                 jdbcTemplate.update("UPDATE ingredients SET stock_quantity = GREATEST(0, stock_quantity - ?), updated_at = NOW() WHERE id = ?", totalQtyNeeded, ingredientId);
 
                 // Lấy tồn kho mới sau trừ
                 BigDecimal newBalance = jdbcTemplate.queryForObject("SELECT stock_quantity FROM ingredients WHERE id = ?", BigDecimal.class, ingredientId);
 
                 // Ghi nhận nhật ký biến động kho (Audit log)
-                String note = "Xuất chế biến " + dishQty + " phần " + dishName + " cho đơn #" + orderId;
+                String note = "Bếp chế biến " + dishQty + " phần " + dishName + " cho đơn #" + orderId;
                 String insertTx = "INSERT INTO inventory_transactions (ingredient_id, transaction_type, quantity, balance_after, unit_price, reference_type, reference_id, employee_id, note) " +
-                                  "VALUES (?, 'RECIPE_CONSUMPTION', ?, ?, ?, 'ORDER', ?, 5, ?)";
-                jdbcTemplate.update(insertTx, ingredientId, totalQtyNeeded.negate(), newBalance, costPrice, orderId, note);
+                                  "VALUES (?, 'RECIPE_CONSUMPTION', ?, ?, ?, 'ORDER', ?, ?, ?)";
+                jdbcTemplate.update(insertTx, ingredientId, totalQtyNeeded.negate(), newBalance, costPrice, orderId, actingEmployeeId, note);
             }
         } catch (Exception e) {
             System.err.println("Lỗi deductInventoryForOrder(" + orderId + "): " + e.getMessage());
+        }
+    }
+
+    /**
+     * Phân tích tồn kho nguyên liệu trước khi Bếp tiếp nhận chế biến
+     */
+    public synchronized void attachStockAnalysis(List<Order> orders) {
+        if (orders == null || orders.isEmpty() || jdbcTemplate == null) return;
+
+        for (Order order : orders) {
+            if (order.getItems() == null || order.getItems().isEmpty()) continue;
+
+            boolean orderAllSufficient = true;
+            for (OrderItem item : order.getItems()) {
+                if (item.getMenuItemId() == null) continue;
+
+                try {
+                    String sql = "SELECT ri.ingredient_id, i.name AS ingredient_name, i.unit, " +
+                                 "i.stock_quantity, ri.quantity_required " +
+                                 "FROM recipe_items ri " +
+                                 "JOIN ingredients i ON ri.ingredient_id = i.id " +
+                                 "WHERE ri.menu_item_id = ?";
+                    List<Map<String, Object>> reqs = jdbcTemplate.queryForList(sql, item.getMenuItemId());
+
+                    boolean itemSufficient = true;
+                    for (Map<String, Object> req : reqs) {
+                        String ingName = (String) req.get("ingredient_name");
+                        String unit = (String) req.get("unit");
+                        BigDecimal stockQty = (BigDecimal) req.get("stock_quantity");
+                        BigDecimal qtyReq = (BigDecimal) req.get("quantity_required");
+
+                        BigDecimal totalNeeded = qtyReq.multiply(BigDecimal.valueOf(item.getQuantity()));
+                        if (stockQty == null || stockQty.compareTo(totalNeeded) < 0) {
+                            itemSufficient = false;
+                            orderAllSufficient = false;
+                            BigDecimal current = stockQty != null ? stockQty : BigDecimal.ZERO;
+                            String notice = "Thiếu " + ingName + ": cần " + totalNeeded.stripTrailingZeros().toPlainString() + " " + unit +
+                                            " (kho còn " + current.stripTrailingZeros().toPlainString() + " " + unit + ")";
+                            item.addMissingStockNotice(notice);
+                            order.addStockCheckAlert(item.getItemName() + ": " + notice);
+                        }
+                    }
+                    item.setHasEnoughStock(itemSufficient);
+                } catch (Exception e) {
+                    System.err.println("Lỗi attachStockAnalysis cho menuItem #" + item.getMenuItemId() + ": " + e.getMessage());
+                }
+            }
+            order.setHasSufficientStock(orderAllSufficient);
         }
     }
 

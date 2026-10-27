@@ -116,6 +116,23 @@
                 <strong>Lưu ý khách:</strong> <span th:text="${order.note}"></span>
               </div>
 
+              <!-- PHÂN TÍCH TỒN KHO NGUYÊN LIỆU TRƯỚC KHI NẤU -->
+              <div th:if="${order.hasSufficientStock}" 
+                   style="background: #edf7ed; border-left: 3px solid #2e7d32; padding: 6px 10px; margin-bottom: 12px; font-size: 11px; color: #1e4620; border-radius: 2px; display: flex; align-items: center; justify-content: space-between;">
+                <span> <strong>Đủ nguyên liệu kho:</strong> Sẵn sàng nấu</span>
+                <span style="font-size: 10px; background: #c8e6c9; color: #1e4620; padding: 2px 6px; border-radius: 10px; font-weight: bold;">KHO SẴN SÀNG</span>
+              </div>
+
+              <div th:if="${order.hasSufficientStock != null and not order.hasSufficientStock}" 
+                   style="background: #fff1f0; border-left: 3px solid #e53e3e; padding: 8px 10px; margin-bottom: 12px; font-size: 11px; color: #9b2c2c; border-radius: 2px;">
+                <div style="font-weight: bold; margin-bottom: 4px; display: flex; align-items: center; gap: 5px;">
+                  <span> CẢNH BÁO THIẾU NGUYÊN LIỆU:</span>
+                </div>
+                <ul style="margin: 0; padding-left: 16px; font-size: 11px; line-height: 1.4;">
+                  <li th:each="alert : ${order.stockCheckAlerts}" th:text="${alert}"></li>
+                </ul>
+              </div>
+
               <!-- Danh sách món -->
               <ul class="kds-dish-list">
                 <li th:each="item : ${order.items}" class="kds-dish-item"
@@ -124,8 +141,23 @@
                     <span class="kds-dish-qty" th:text="${item.quantity} + 'x'">1x</span>
                     <strong th:text="${item.itemName}" style="font-size: 14px;"
                             th:style="${item.status == 'SERVED' ? 'text-decoration: line-through; color: #64748b;' : ''}">Bò sốt tiêu đen</strong>
+                    
+                    <!-- Huy hiệu trạng thái chế biến -->
                     <span th:if="${item.status == 'PENDING'}" class="badge" style="background: #fef3c7; color: #92400e; font-size: 10px; margin-left: 6px; font-weight: 700;"> MỚI GỌI</span>
                     <span th:if="${item.status == 'SERVED'}" class="badge" style="background: #e2e8f0; color: #475569; font-size: 10px; margin-left: 6px;">✓ ĐÃ LÊN BÀN</span>
+
+                    <!-- Huy hiệu tình trạng nguyên liệu kho -->
+                    <span th:if="${item.hasEnoughStock != null and item.hasEnoughStock and item.status != 'SERVED'}" 
+                          class="badge" style="background: #e6f4ea; color: #137333; font-size: 10px; margin-left: 6px;">✓ Đủ NL</span>
+                    <span th:if="${item.hasEnoughStock != null and not item.hasEnoughStock and item.status != 'SERVED'}" 
+                          class="badge" style="background: #fce8e6; color: #c5221f; font-size: 10px; margin-left: 6px; font-weight: bold;">⚠️ Thiếu NL</span>
+
+                    <!-- Chi tiết thiếu nguyên liệu nếu có -->
+                    <div th:each="notice : ${item.missingStockNotices}" 
+                         style="font-size: 11px; color: #c5221f; margin-top: 3px; background: #fff5f5; padding: 2px 6px; border-radius: 3px; border-left: 2px solid #e53e3e;" 
+                         th:text="${notice}">
+                    </div>
+
                     <div th:if="${item.note != null and not #strings.isEmpty(item.note)}" 
                          class="kds-dish-note" th:text="'Yêu cầu: ' + ${item.note}">
                     </div>
@@ -137,8 +169,16 @@
               <form th:action="@{/admin/kitchen/update-status}" method="post">
                 <input type="hidden" name="id" th:value="${order.id}">
                 <input type="hidden" name="status" value="COOKING">
-                <button type="submit" class="kds-action-btn kds-btn-start">
-                   Bắt Đầu Nấu
+                
+                <button th:if="${order.hasSufficientStock}" type="submit" class="kds-action-btn kds-btn-start">
+                   Bắt Đầu Nấu;
+                </button>
+
+                <button th:if="${order.hasSufficientStock != null and not order.hasSufficientStock}" 
+                        type="submit" class="kds-action-btn" 
+                        style="background: #dd6b20; color: #fff; border-color: #dd6b20;"
+                        onclick="return confirm('Cảnh báo: Đơn này có nguyên liệu thiếu so với định mức trong kho! Bạn có chắc chắn muốn tiếp tục chế biến và trừ tồn kho hiện có?');">
+                   Vẫn Tiếp Tục Nấu; 
                 </button>
               </form>
 
@@ -165,9 +205,14 @@
                   <div class="kds-ticket-code" th:text="${order.orderCode}">ORD-002</div>
                   <strong style="font-size: 13px; color: var(--admin-text);" th:text="${order.orderTypeDisplayName}">Bàn T1-01</strong>
                 </div>
-                <div class="kds-timer-badge" th:classappend="${order.minutesWaiting > 20} ? 'kds-timer-urgent' : ''" style="background: #e6f0fa; color: #1a5699;">
-                  <span th:text="'⏱ ' + ${order.minutesWaiting} + ' ph'">⏱ 12 ph</span>
+                <div class="kds-timer-badge" th:classappend="${order.minutesWaiting > 20} ? 'kds-timer-urgent' : ''">
+                  <span th:text="' ' + ${order.minutesWaiting} + ' ph'">⏱ 10 ph</span>
                 </div>
+              </div>
+
+              <!-- Chỉ báo đã trừ kho -->
+              <div style="background: #e8f5e9; border-left: 3px solid #2e7d32; padding: 4px 8px; margin-bottom: 10px; font-size: 11px; color: #1b5e20; border-radius: 2px; display: flex; align-items: center; gap: 6px;">
+                <span> <strong>Kho:</strong> Đã tự động xuất trừ nguyên liệu</span>
               </div>
 
               <!-- Ghi chú chung của đơn -->

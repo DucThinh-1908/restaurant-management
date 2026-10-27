@@ -42,6 +42,9 @@ public class AdminKitchenController {
         List<Order> ordersReady = orderService.getOrdersByStatus("READY");
         List<Order> ordersCompleted = orderService.getOrdersByStatus("COMPLETED");
 
+        // Phân tích định mức nguyên liệu kho cho các đơn đang chờ chế biến
+        orderService.attachStockAnalysis(ordersPending);
+
         // Tổng hợp hàng đợi các món đang chờ chế biến
         Map<String, Integer> dishQueue = orderService.getActiveDishQueue();
 
@@ -68,19 +71,20 @@ public class AdminKitchenController {
                                       @RequestParam("status") String status,
                                       HttpSession session,
                                       RedirectAttributes redirectAttributes) {
-        if (session.getAttribute("loggedInEmployee") == null) return "redirect:/admin/login";
+        Employee emp = (Employee) session.getAttribute("loggedInEmployee");
+        if (emp == null) return "redirect:/admin/login";
 
-        orderService.updateOrderStatus(id, status);
+        orderService.updateOrderStatus(id, status, emp.getId());
 
         String message = "Đã cập nhật trạng thái đơn #" + id + " sang: ";
         if ("COOKING".equalsIgnoreCase(status)) {
-            message = " Bếp đã tiếp nhận đơn #" + id + " - Bắt đầu chế biến!";
+            message = "👨‍🍳 Bếp đã tiếp nhận đơn #" + id + " - Bắt đầu chế biến & đã tự động trừ nguyên liệu trong kho!";
         } else if ("READY".equalsIgnoreCase(status)) {
-            message = " Đơn #" + id + " đã nấu xong - Báo phục vụ bưng ra bàn / quầy giao khách!";
+            message = "🍽️ Đơn #" + id + " đã nấu xong - Báo phục vụ bưng ra bàn / quầy giao khách!";
         } else if ("SERVING".equalsIgnoreCase(status)) {
-            message = " Đã phục vụ ra bàn đơn #" + id + "!";
+            message = "✓ Đã phục vụ ra bàn đơn #" + id + "!";
         } else if ("COMPLETED".equalsIgnoreCase(status)) {
-            message = " Đã hoàn tất phục vụ đơn #" + id + "!";
+            message = "✓ Đã hoàn tất phục vụ đơn #" + id + "!";
         }
         redirectAttributes.addFlashAttribute("successMessage", message);
         return "redirect:/admin/kitchen";

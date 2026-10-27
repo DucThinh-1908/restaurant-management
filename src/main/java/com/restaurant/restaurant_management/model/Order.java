@@ -279,4 +279,30 @@ public class Order {
     public void setBillRequested(boolean billRequested) {
         this.billRequested = billRequested;
     }
+
+    private Boolean hasSufficientStock = true;
+    private List<String> stockCheckAlerts = new ArrayList<>();
+
+    public Boolean getHasSufficientStock() {
+        return hasSufficientStock;
+    }
+
+    public void setHasSufficientStock(Boolean hasSufficientStock) {
+        this.hasSufficientStock = hasSufficientStock;
+    }
+
+    public List<String> getStockCheckAlerts() {
+        return stockCheckAlerts;
+    }
+
+    public void setStockCheckAlerts(List<String> stockCheckAlerts) {
+        this.stockCheckAlerts = stockCheckAlerts;
+    }
+
+    public void addStockCheckAlert(String alert) {
+        if (this.stockCheckAlerts == null) {
+            this.stockCheckAlerts = new ArrayList<>();
+        }
+        this.stockCheckAlerts.add(alert);
+    }
 }

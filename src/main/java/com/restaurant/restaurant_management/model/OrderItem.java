@@ -96,4 +96,30 @@ public class OrderItem {
     public void setStatus(String status) {
         this.status = status;
     }
+
+    private Boolean hasEnoughStock = true;
+    private java.util.List<String> missingStockNotices = new java.util.ArrayList<>();
+
+    public Boolean getHasEnoughStock() {
+        return hasEnoughStock;
+    }
+
+    public void setHasEnoughStock(Boolean hasEnoughStock) {
+        this.hasEnoughStock = hasEnoughStock;
+    }
+
+    public java.util.List<String> getMissingStockNotices() {
+        return missingStockNotices;
+    }
+
+    public void setMissingStockNotices(java.util.List<String> missingStockNotices) {
+        this.missingStockNotices = missingStockNotices;
+    }
+
+    public void addMissingStockNotice(String notice) {
+        if (this.missingStockNotices == null) {
+            this.missingStockNotices = new java.util.ArrayList<>();
+        }
+        this.missingStockNotices.add(notice);
+    }
 }
